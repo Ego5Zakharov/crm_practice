@@ -11,7 +11,7 @@ class Database
         string $dbname = '',
         string $port = '3306',
         string $username = 'root',
-        string $password = '')
+        string $password = 'root')
     {
         $this->connect($host, $dbname, $port, $username, $password);
     }

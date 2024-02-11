@@ -25,14 +25,12 @@ class Router
     {
         $routes = $this->getRoutes();
 
-
         foreach ($routes as $route) {
             $this->routes[$route->getMethod()][$route->getUri()] = $route->getAction();
         }
-
     }
 
-    public function dispatch(string $uri, string $method)
+    public function dispatch(string $uri, string $method): void
     {
         $route = $this->findRoute($uri, $method);
         if (is_array($route)) {
@@ -40,6 +38,8 @@ class Router
             $action = $route[1];
 
             $class = new $uri();
+
+            // Add middlewares
 
             call_user_func([$class, $action]);
         } else {
