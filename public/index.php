@@ -9,4 +9,3 @@ require_once APP_PATH . "/vendor/autoload.php";
 $application = new App();
 
 $application->run();
-

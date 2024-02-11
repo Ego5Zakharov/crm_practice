@@ -3,7 +3,6 @@
 namespace App\Kernel;
 
 use App\Kernel\Container\Container;
-use App\Kernel\Database\Database;
 
 final class App
 {
@@ -14,8 +13,11 @@ final class App
         $this->container = new Container();
     }
 
-    public function run()
+    public function run(): void
     {
-        // инициализация контейнера
+        $this->container->router->dispatch(
+            $this->container->request->uri(),
+            $this->container->request->method()
+        );
     }
 }

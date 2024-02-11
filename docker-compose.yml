@@ -1,0 +1,52 @@
+version: '3'
+
+services:
+    nginx:
+        image: nginx:latest
+        ports:
+            - "8876:80"
+        volumes:
+            - ./:/var/www
+            - ./_docker/nginx/conf.d:/etc/nginx/conf.d
+        depends_on:
+            - app
+        container_name: crm_practice_nginx
+
+    app:
+        build:
+            context: .
+            dockerfile: _docker/app/Dockerfile
+        volumes:
+            - ./:/var/www
+        depends_on:
+            - db
+        container_name: crm_practice_app
+
+    db:
+        image: mysql:8.0
+        restart: always
+        environment:
+            MYSQL_DATABASE: crm_practice
+            MYSQL_ROOT_PASSWORD: root
+        volumes:
+            - db-data:/var/lib/mysql
+        ports:
+            - "3306:3306"
+        command: --character-set-server=utf8 --collation-server=utf8_unicode_ci
+        container_name: crm_practice_db
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: crm_practice_phpmyadmin
+        environment:
+            PMA_HOST: db
+            MYSQL_ROOT_PASSWORD: root
+            PMA_USER: root
+            PMA_PASSWORD: root
+        ports:
+            - "8082:80"
+        depends_on:
+            - db
+
+volumes:
+    db-data:
