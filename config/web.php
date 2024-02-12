@@ -1,8 +1,5 @@
 <?php
 
-
-// выбираем метод контроллера на основе REQUEST URI и пути до класса
-
 use App\Kernel\Http\Controllers\TestController;
 use App\Kernel\Route\Route;
 

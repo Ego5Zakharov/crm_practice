@@ -9,9 +9,20 @@ class Route
         private string $method,
         private string $uri,
         private mixed  $action,
+        private array  $middlewares
     )
     {
 
+    }
+
+    public function getMiddlewares(): array
+    {
+        return $this->middlewares;
+    }
+
+    public function setMiddlewares(array $middlewares): void
+    {
+        $this->middlewares = $middlewares;
     }
 
     public static function get(
@@ -19,7 +30,7 @@ class Route
         mixed  $action,
     ): Route
     {
-        return new Route('GET', $uri, $action);
+        return new Route('GET', $uri, $action, []);
     }
 
     public static function post(
@@ -27,7 +38,7 @@ class Route
         mixed  $action,
     ): Route
     {
-        return new Route('POST', $uri, $action);
+        return new Route('POST', $uri, $action, []);
     }
 
     public function setUri(string $uri): void

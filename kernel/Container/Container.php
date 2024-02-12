@@ -12,6 +12,7 @@ class Container
     public Database $database;
     public Router $router;
     public Request $request;
+    public Config $config;
 
     public function __construct()
     {
@@ -22,10 +23,16 @@ class Container
     {
         $this->request = Request::initialization();
 
-        $config = new Config();
+        $this->config = new Config();
 
-        $config->config('database.php1.php2.123');
-        $this->database = new Database('db', 'crm_practice', '3306', 'root', 'root');
+        $this->database = new Database(
+            $this->config->get('database.host'),
+            $this->config->get('database.dbname'),
+            $this->config->get('database.port', '3306'), // Указываем значение по умолчанию
+            $this->config->get('database.username'),
+            $this->config->get('database.password')
+        );
+
 
         $this->router = new Router();
     }

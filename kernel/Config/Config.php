@@ -4,7 +4,7 @@ namespace App\Kernel\Config;
 
 class Config
 {
-    public function config(string $key, $default = null)
+    public function get(string $key, string $default = null): mixed
     {
         $keyParts = explode('.', $key);
 
@@ -14,12 +14,9 @@ class Config
             return $default;
         }
 
-        $config = require_once $configPath;
+        $config = require $configPath;
 
-        // убираем 1 элемент из массива
-        $slicedKeyParts = array_slice($keyParts, 1);
-
-        foreach ($slicedKeyParts as $part) {
+        foreach (array_slice($keyParts, 1) as $part) {
             if (isset($config[$part])) {
                 $config = $config[$part];
             } else {
