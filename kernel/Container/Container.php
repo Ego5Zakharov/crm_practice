@@ -3,9 +3,12 @@
 namespace App\Kernel\Container;
 
 use App\Kernel\Config\Config;
+use App\Kernel\Controller\Controller;
 use App\Kernel\Database\Database;
+use App\Kernel\Http\Controllers\TestController;
 use App\Kernel\Request\Request;
 use App\Kernel\Router\Router;
+use App\Kernel\View\View;
 
 class Container
 {
@@ -13,6 +16,7 @@ class Container
     public Router $router;
     public Request $request;
     public Config $config;
+    public View $view;
 
     public function __construct()
     {
@@ -21,9 +25,11 @@ class Container
 
     public function initialize(): void
     {
-        $this->request = Request::initialization();
-
         $this->config = new Config();
+
+        $this->view = new View();
+        
+        $this->request = Request::initialization();
 
         $this->database = new Database(
             $this->config->get('database.host'),
@@ -33,7 +39,6 @@ class Container
             $this->config->get('database.password')
         );
 
-
-        $this->router = new Router();
+        $this->router = new Router($this->request, $this->view);
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Kernel\Router;
 
+use App\Kernel\Request\Request;
+use App\Kernel\View\View;
 use JetBrains\PhpStorm\NoReturn;
 
 class Router
@@ -11,7 +13,10 @@ class Router
         'POST' => []
     ];
 
-    public function __construct()
+    public function __construct(
+        public Request $request,
+        public View $view
+    )
     {
         $this->initRoutes();
     }
@@ -37,8 +42,7 @@ class Router
             $uri = $route[0];
             $action = $route[1];
 
-            $class = new $uri();
-
+            $class = new $uri($this->request,$this->view);
             // Add middlewares
 
             call_user_func([$class, $action]);

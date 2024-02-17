@@ -2,16 +2,21 @@
 
 namespace App\Kernel\Http\Controllers;
 
-class TestController
+use App\Kernel\Controller\Controller;
+use App\Kernel\View\ViewNotFoundException;
+
+class TestController extends Controller
 {
-    public function testGet(): string
+    /**
+     * @throws ViewNotFoundException
+     */
+    public function index(): string
     {
-        return require_once APP_PATH . "/views/pages/test.php";
+        return $this->view->view('test', ['test' => []]);
     }
 
     public function testPost(): string
     {
         return 'POST METHOD';
-//        return require_once APP_PATH . "/views/pages/test.php";
     }
 }
