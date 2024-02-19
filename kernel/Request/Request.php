@@ -55,4 +55,11 @@ class Request
         return $this->files;
     }
 
+    public function input(string $argument, ?string $default)
+    {
+        return $this->get[$argument]
+            ?? $this->post[$argument]
+            ?? $default;
+    }
+
 }

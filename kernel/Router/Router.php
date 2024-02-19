@@ -23,7 +23,7 @@ class Router
 
     public function getRoutes()
     {
-        return require_once APP_PATH . "/config/web.php";
+        return require_once base_path() . "/config/web.php";
     }
 
     public function initRoutes(): void

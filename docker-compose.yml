@@ -32,7 +32,7 @@ services:
             - db-data:/var/lib/mysql
         ports:
             - "3306:3306"
-        command: --character-set-server=utf8 --collation-server=utf8_unicode_ci
+        command: --character-set-server=utf8 --collation-server=utf8_unicode_ci --skip-host-cache=0
         container_name: crm_practice_db
 
     phpmyadmin:

@@ -29,7 +29,8 @@ class Database
                 username: $username,
                 password: $password
             );
-            echo "PDO has been successfully launched";
+
+//            echo "PDO has been successfully launched";
         } catch (\PDOException $exception) {
             echo $exception->getMessage();
         }

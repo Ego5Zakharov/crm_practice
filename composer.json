@@ -2,9 +2,11 @@
   "require": {
     "php": "^8.1",
     "symfony/var-dumper": "^6.3",
-    "ext-pdo": "*"
+    "ext-pdo": "*",
+    "vatradar/env": "^0.6.0"
   },
   "autoload": {
+    "files": ["kernel/Helpers/helpers.php"],
     "psr-4": {
       "App\\Kernel\\": "kernel"
     }

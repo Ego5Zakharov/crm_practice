@@ -10,7 +10,7 @@ class View
      */
     public function view(string $filePath, array $data = []): mixed
     {
-        $filePath = APP_PATH . "/views/pages/$filePath.php";
+        $filePath = base_path() . "/views/pages/$filePath.php";
 
         if (!file_exists($filePath)) {
             throw new ViewNotFoundException("$filePath not found.");
@@ -26,7 +26,7 @@ class View
      */
     public function component(string $path, array $data = []): bool|string
     {
-        $filePath = APP_PATH . "/views/components/$path.php";
+        $filePath = base_path() . "/views/components/$path.php";
 
         if (!file_exists($filePath)) {
             throw new ViewComponentNotFoundException("$filePath not found.");

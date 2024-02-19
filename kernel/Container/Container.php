@@ -34,7 +34,7 @@ class Container
         $this->database = new Database(
             $this->config->get('database.host'),
             $this->config->get('database.dbname'),
-            $this->config->get('database.port', '3306'), // Указываем значение по умолчанию
+            $this->config->get('database.port'),
             $this->config->get('database.username'),
             $this->config->get('database.password')
         );

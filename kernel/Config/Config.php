@@ -8,7 +8,7 @@ class Config
     {
         $keyParts = explode('.', $key);
 
-        $configPath = APP_PATH . "/config/$keyParts[0].php";
+        $configPath = base_path() . "/config/$keyParts[0].php";
 
         if (!file_exists($configPath)) {
             return $default;
