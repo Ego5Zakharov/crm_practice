@@ -3,6 +3,7 @@
 namespace App\Kernel\Router;
 
 use App\Kernel\Request\Request;
+use App\Kernel\Session\Session;
 use App\Kernel\View\View;
 use JetBrains\PhpStorm\NoReturn;
 
@@ -15,7 +16,8 @@ class Router
 
     public function __construct(
         public Request $request,
-        public View $view
+        public View    $view,
+        public Session $session
     )
     {
         $this->initRoutes();
@@ -42,7 +44,14 @@ class Router
             $uri = $route[0];
             $action = $route[1];
 
-            $class = new $uri($this->request,$this->view);
+            // dependency injection
+            $class = new $uri(
+                $this->request,
+                $this->view,
+                $this->session
+            );
+
+            // TODO
             // Add middlewares
 
             call_user_func([$class, $action]);

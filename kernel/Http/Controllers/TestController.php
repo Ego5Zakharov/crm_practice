@@ -24,9 +24,10 @@ class TestController extends Controller
         return $this->view->view('test/create');
     }
 
-   public function store(): string
+    public function store(): string
     {
-        dd($this->request->input('name'));
+//        dd($this->request->input('name'));
+
 
         return 'POST METHOD';
     }

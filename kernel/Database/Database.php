@@ -35,4 +35,5 @@ class Database
             echo $exception->getMessage();
         }
     }
+
 }

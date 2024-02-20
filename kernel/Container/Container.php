@@ -8,6 +8,7 @@ use App\Kernel\Database\Database;
 use App\Kernel\Http\Controllers\TestController;
 use App\Kernel\Request\Request;
 use App\Kernel\Router\Router;
+use App\Kernel\Session\Session;
 use App\Kernel\View\View;
 
 class Container
@@ -17,6 +18,7 @@ class Container
     public Request $request;
     public Config $config;
     public View $view;
+    public Session $session;
 
     public function __construct()
     {
@@ -28,8 +30,10 @@ class Container
         $this->config = new Config();
 
         $this->view = new View();
-        
+
         $this->request = Request::initialization();
+
+        $this->session = new Session();
 
         $this->database = new Database(
             $this->config->get('database.host'),
@@ -39,6 +43,11 @@ class Container
             $this->config->get('database.password')
         );
 
-        $this->router = new Router($this->request, $this->view);
+        $this->router = new Router(
+            $this->request,
+            $this->view,
+            $this->session
+
+        );
     }
 }
