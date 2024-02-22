@@ -3,9 +3,7 @@
 namespace App\Kernel\Container;
 
 use App\Kernel\Config\Config;
-use App\Kernel\Controller\Controller;
 use App\Kernel\Database\Database;
-use App\Kernel\Http\Controllers\TestController;
 use App\Kernel\Request\Request;
 use App\Kernel\Router\Router;
 use App\Kernel\Session\Session;
@@ -46,8 +44,10 @@ class Container
         $this->router = new Router(
             $this->request,
             $this->view,
-            $this->session
-
+            $this->session,
+            $this->database
         );
+
+
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Kernel\Router;
 
+use App\Kernel\Database\Database;
 use App\Kernel\Request\Request;
 use App\Kernel\Session\Session;
 use App\Kernel\View\View;
@@ -15,9 +16,10 @@ class Router
     ];
 
     public function __construct(
-        public Request $request,
-        public View    $view,
-        public Session $session
+        public Request  $request,
+        public View     $view,
+        public Session  $session,
+        public Database $database
     )
     {
         $this->initRoutes();
@@ -48,7 +50,8 @@ class Router
             $class = new $uri(
                 $this->request,
                 $this->view,
-                $this->session
+                $this->session,
+                $this->database
             );
 
             // TODO

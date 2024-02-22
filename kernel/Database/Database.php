@@ -6,6 +6,8 @@ use PDO;
 
 class Database
 {
+    private PDO $pdo;
+
     public function __construct(
         string $host = 'localhost',
         string $dbname = '',
@@ -24,16 +26,19 @@ class Database
         string $password): void
     {
         try {
-            $pdo = new PDO(
+            $this->pdo = new PDO(
                 dsn: "mysql:host=$host;dbname=$dbname;port=$port",
                 username: $username,
                 password: $password
             );
-
 //            echo "PDO has been successfully launched";
         } catch (\PDOException $exception) {
             echo $exception->getMessage();
         }
     }
 
+    public function getPDO(): PDO
+    {
+        return $this->pdo;
+    }
 }

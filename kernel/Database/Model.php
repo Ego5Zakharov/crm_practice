@@ -2,9 +2,14 @@
 
 namespace App\Kernel\Database;
 
-abstract class Entity
+abstract class Model
 {
     protected array $data = [];
+
+    protected array $fillable = [];
+
+    protected string $table;
+
 
     public function __get(string $value)
     {

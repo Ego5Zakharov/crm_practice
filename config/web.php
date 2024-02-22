@@ -1,7 +1,7 @@
 <?php
 
-use App\Kernel\Http\Controllers\TestController;
 use App\Kernel\Route\Route;
+use App\Http\Controllers\TestController;
 
 return [
     Route::get('/', [TestController::class, 'index']),
