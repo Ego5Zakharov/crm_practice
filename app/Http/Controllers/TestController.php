@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Kernel\Controller\Controller;
-use App\Kernel\Database\ORM;
 use App\Kernel\View\ViewNotFoundException;
 use App\Models\User;
 
@@ -25,7 +24,7 @@ class TestController extends Controller
         return $this->view->view('test/create');
     }
 
-    public function store(): string
+    public function store()
     {
 //        dd($this->request->input('name'));
 
@@ -35,14 +34,15 @@ class TestController extends Controller
         $user->email = "egor@mail.ru";
         $user->password = "12345678";
 
-        $orm = new ORM($this->database->getPDO());
+//        $user = $user->find(80);
+//        dd($user->name);
 
-        $result = $orm->transaction(function () use ($orm, $user) {
-            return $orm->create($user, 'users');
-        });
+        $user = $user->create();
+      
+//        $user->id = 10;
+//
+//        $user->update();
 
-        dd($result);
-
-        return 'POST METHOD';
+//        $orm = new ORM($this->database->getPDO());
     }
 }

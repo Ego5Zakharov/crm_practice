@@ -2,11 +2,13 @@
 
 namespace App\Kernel\Database;
 
+use http\Exception\RuntimeException;
 use PDO;
 
 class Database
 {
-    private PDO $pdo;
+    public static PDO $pdo;
+    private static ?Database $instance = null;
 
     public function __construct(
         string $host = 'localhost',
@@ -26,11 +28,13 @@ class Database
         string $password): void
     {
         try {
-            $this->pdo = new PDO(
+            $this::$pdo = new PDO(
                 dsn: "mysql:host=$host;dbname=$dbname;port=$port",
                 username: $username,
                 password: $password
             );
+
+            self::$instance = $this;
 //            echo "PDO has been successfully launched";
         } catch (\PDOException $exception) {
             echo $exception->getMessage();
@@ -39,6 +43,15 @@ class Database
 
     public function getPDO(): PDO
     {
-        return $this->pdo;
+        return self::$pdo;
+    }
+
+    public static function getInstance(): Database
+    {
+        if (self::$instance === null) {
+            throw new RuntimeException('Database instance has not been created.');
+        }
+
+        return self::$instance;
     }
 }

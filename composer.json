@@ -3,7 +3,8 @@
     "php": "^8.1",
     "symfony/var-dumper": "^6.3",
     "ext-pdo": "*",
-    "vatradar/env": "^0.6.0"
+    "vatradar/env": "^0.6.0",
+    "ext-http": "*"
   },
   "autoload": {
     "files": ["kernel/Helpers/helpers.php"],

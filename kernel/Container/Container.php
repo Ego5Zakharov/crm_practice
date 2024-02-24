@@ -41,6 +41,9 @@ class Container
             $this->config->get('database.password')
         );
 
+        // получать все возможные модели в папке models
+
+
         $this->router = new Router(
             $this->request,
             $this->view,
