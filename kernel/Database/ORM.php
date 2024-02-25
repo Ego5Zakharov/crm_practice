@@ -2,9 +2,7 @@
 
 namespace App\Kernel\Database;
 
-use Exception;
 use PDO;
-use PDOException;
 
 class ORM
 {
@@ -14,7 +12,5 @@ class ORM
     {
         $this->pdo = $pdo;
     }
-
-
 
 }

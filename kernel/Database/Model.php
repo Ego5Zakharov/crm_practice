@@ -7,24 +7,38 @@ use PDOException;
 
 abstract class Model
 {
+    // первичный ключ
+    protected string $primaryKey = "id";
+
+    // подключение к бд
     protected Database $database;
 
     // оригинальные данные записи подлежащие заполнению
     protected array $original = [];
+
     // текущие данные записи(любые)
     protected array $current = [];
+
     // переменные которые подлежат заполнению в таблице
     protected array $fillable = [];
+
     // название таблицы
     protected string $table = "";
+
     // разрешено ли массовое заполнение
     protected bool $guard = true;
 
-    public function __construct(array|Model $original = [])
+    // связи модели
+    protected array $relations = [];
+
+    // какие связи модели подгружать сразу
+    protected array $with = [];
+
+    public function __construct(array|Model $data = [])
     {
         $this->database = Database::getInstance();
 
-        foreach ($original as $key => $value) {
+        foreach ($data as $key => $value) {
             $this->$key = $value;
         }
     }
@@ -40,7 +54,7 @@ abstract class Model
         return null;
     }
 
-    public function __set(string $key, string $value)
+    public function __set(mixed $key, mixed $value)
     {
         if ($this->guard && in_array($key, $this->fillable)) {
             $this->original[$key] = $value;
@@ -56,9 +70,6 @@ abstract class Model
         return $this->original;
     }
 
-    /**
-     * @throws PDOException
-     */
     public function create(): Model|static|null
     {
         $original = $this->toArray();
@@ -73,27 +84,14 @@ abstract class Model
 
         $statement->execute($original);
 
-        return $this->find(
+        $model = $this->find(
             $this->database::$pdo->lastInsertId()
         );
-    }
 
-    public function transaction(callable $callback)
-    {
-        try {
-            $this->database::$pdo->beginTransaction();
+        $this->original = $model->original;
+        $this->current = $model->current;
 
-            $result = $callback();
-
-            $this->database::$pdo->commit();
-
-            return $result;
-        } catch (PDOException $exception) {
-
-            $this->database::$pdo->rollBack();
-
-            throw new PDOException($exception);
-        }
+        return $model;
     }
 
     public function find(int $id): Model|static|null
@@ -147,4 +145,37 @@ abstract class Model
 
         return $statement->execute();
     }
+
+    /**
+     * путь до модели с которой у нас связь
+     * @param string|Model $relatedModelPath
+     *
+     * ключ который связывает эти модели
+     * @param string $foreignId
+     *
+     * первичный ключ основной таблицы из которой реализуется связь
+     * @param string $originalId
+     * @return mixed
+     */
+    public function hasOne(string|Model $relatedModelPath, string $foreignId, string $originalId): mixed
+    {
+        $relatedModel = new $relatedModelPath;
+        $relatedModelTable = $relatedModel->table;
+
+        if (!$this->original[$foreignId]) {
+            throw new PDOException("Incorrect foreignId value!");
+        }
+        $originalIdValue = $this->original[$foreignId];
+
+        $query = "SELECT * FROM $relatedModelTable WHERE $originalId = :$originalId";
+
+        $statement = $this->database->getPDO()->prepare($query);
+
+        $statement->bindParam(":$originalId", $originalIdValue);
+
+        $statement->execute();
+
+        return $statement->fetch(PDO::FETCH_ASSOC);
+    }
+
 }
