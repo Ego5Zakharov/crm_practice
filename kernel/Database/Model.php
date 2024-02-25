@@ -29,7 +29,7 @@ abstract class Model
     protected bool $guard = true;
 
     // связи модели
-    protected array $relations = [];
+    public array $relations = [];
 
     // какие связи модели подгружать сразу
     protected array $with = [];
@@ -41,15 +41,24 @@ abstract class Model
         foreach ($data as $key => $value) {
             $this->$key = $value;
         }
+
+        // relations
     }
 
     public function __get(string $value)
     {
+        // подгружаем связи
+        if (method_exists($this, $value)) {
+           $this->relations[$value] = $this->$value();
+           return $this->relations[$value];
+        }
+
         if (array_key_exists($value, $this->original)) {
             return $this->original[$value];
         } else if (array_key_exists($value, $this->current)) {
             return $this->current[$value];
         }
+
 
         return null;
     }
@@ -173,9 +182,12 @@ abstract class Model
 
         $statement->bindParam(":$originalId", $originalIdValue);
 
-        $statement->execute();
+        $model = $statement->execute() ? $statement->fetch(PDO::FETCH_ASSOC) : null;
 
-        return $statement->fetch(PDO::FETCH_ASSOC);
+        if (!$model) {
+            return null;
+        }
+        return new $relatedModel($model);
     }
 
 }

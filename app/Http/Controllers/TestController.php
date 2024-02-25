@@ -27,35 +27,6 @@ class TestController extends Controller
 
     public function store()
     {
-//        dd($this->request->input('name'));
-
-//        $user = new User();
-//
-//        $user->name = "Egor";
-//        $user->email = "egor@mail.ru";
-//        $user->password = "12345678";
-
-//        $user = $user->find(80);
-//        dd($user->name);
-
-//        $user = $user->create();
-//        dd($user);
-
-//
-//        $role = new Role();
-//        $role->name = "admin";
-//        $role->create();
-//
-//        $user->id = 10;
-//
-//        $user->update();
-
-//        $orm = new ORM($this->database->getPDO());
-
-
-
-
-
         $role = new Role();
         $role->name = "admin";
         $role->create();
@@ -67,8 +38,8 @@ class TestController extends Controller
         $user->role_id = $role->id;
         $user->create();
 
-        // как получить role_id?
-        dd($user->role());
-//        $user->hasOne(Role::class, "role_id", 'id');
+        dump($user->role);
+
+//      $user->hasOne(Role::class, "role_id", 'id');
     }
 }
