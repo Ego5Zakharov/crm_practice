@@ -49,8 +49,8 @@ abstract class Model
     {
         // подгружаем связи
         if (method_exists($this, $value)) {
-           $this->relations[$value] = $this->$value();
-           return $this->relations[$value];
+            $this->relations[$value] = $this->$value();
+            return $this->relations[$value];
         }
 
         if (array_key_exists($value, $this->original)) {
@@ -166,14 +166,15 @@ abstract class Model
      * @param string $originalId
      * @return mixed
      */
-    public function hasOne(string|Model $relatedModelPath, string $foreignId, string $originalId): mixed
+    public function hasOne(string $relatedModelPath, string $foreignId, string $originalId): mixed
     {
         $relatedModel = new $relatedModelPath;
         $relatedModelTable = $relatedModel->table;
 
-        if (!$this->original[$foreignId]) {
-            throw new PDOException("Incorrect foreignId value!");
+        if (!key_exists($foreignId, $this->original)) {
+           return null;
         }
+
         $originalIdValue = $this->original[$foreignId];
 
         $query = "SELECT * FROM $relatedModelTable WHERE $originalId = :$originalId";
@@ -190,4 +191,38 @@ abstract class Model
         return new $relatedModel($model);
     }
 
+
+    public function hasMany(string $relatedModelPath, $foreignId, string $localId): ?array
+    {
+        $relatedModel = new $relatedModelPath();
+
+        $relatedModelTable = $relatedModel->table;
+
+        if (!key_exists($localId, $this->original)) {
+            return null;
+        }
+
+        $localIdValue = $this->id;
+
+        $query = "SELECT * FROM $relatedModelTable WHERE $foreignId = :$localId";
+
+        $statement = $this->database->getPDO()->prepare($query);
+
+        $statement->bindParam(':id', $localIdValue);
+
+        $data = $statement->execute() ? $statement->fetchAll(PDO::FETCH_ASSOC) : null;
+
+        if (!$data) {
+            return null;
+        }
+
+        $models = [];
+
+        foreach ($data as $item) {
+            $model = new $relatedModelPath($item);
+            $models[] = $model;
+        }
+
+        return $models ?? null;
+    }
 }

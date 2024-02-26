@@ -18,8 +18,18 @@ class User extends Model
         'role_id'
     ];
 
-    public function role()
+//    public function role()
+//    {
+//        return $this->hasOne(Role::class, 'role_id', 'id');
+//    }
+
+    public function roles()
     {
-        return $this->hasOne(Role::class, 'role_id', 'id');
+        return $this->belongsToMany(
+            Role::class,
+            'user_role',
+            'user_id',
+            'role_id',
+        );
     }
 }

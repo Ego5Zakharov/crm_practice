@@ -42,6 +42,7 @@ class ComposerStaticInit6c2383524e1ca5344e3ce091898fd58f
         'A' => 
         array (
             'App\\Kernel\\' => 11,
+            'App\\' => 4,
         ),
     );
 
@@ -81,6 +82,10 @@ class ComposerStaticInit6c2383524e1ca5344e3ce091898fd58f
         'App\\Kernel\\' => 
         array (
             0 => __DIR__ . '/../..' . '/kernel',
+        ),
+        'App\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/app',
         ),
     );
 

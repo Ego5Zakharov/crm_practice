@@ -30,15 +30,36 @@ class TestController extends Controller
         $role = new Role();
         $role->name = "admin";
         $role->create();
-        $user = new User();
 
-        $user->name = "Egor";
-        $user->email = "egor@mail.ru";
-        $user->password = "password";
-        $user->role_id = $role->id;
-        $user->create();
+        $role2 = new Role();
+        $role2->name = 'user';
+        $role2->create();
 
-        dump($user->role);
+        $user1 = new User();
+
+        $user1->name = "Egor";
+        $user1->email = "egor@mail.ru";
+        $user1->password = "password";
+        $user1->role_id = $role->id;
+        $user1->create();
+
+        $user2 = new User();
+        $user2->name = "Egor";
+        $user2->email = "egor@mail.ru";
+        $user2->password = "password";
+        $user2->role_id = $role->id;
+        $user2->create();
+
+        $user3 = new User();
+        $user3->name = "Egor";
+        $user3->email = "egor@mail.ru";
+        $user3->password = "password";
+        $user3->role_id = $role->id;
+        $user3->create();
+
+//        dd($user->role());
+
+//        dump($role->users);
 
 //      $user->hasOne(Role::class, "role_id", 'id');
     }
