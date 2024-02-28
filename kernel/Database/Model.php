@@ -172,7 +172,7 @@ abstract class Model
         $relatedModelTable = $relatedModel->table;
 
         if (!key_exists($foreignId, $this->original)) {
-           return null;
+            return null;
         }
 
         $originalIdValue = $this->original[$foreignId];
@@ -192,7 +192,11 @@ abstract class Model
     }
 
 
-    public function hasMany(string $relatedModelPath, $foreignId, string $localId): ?array
+    public function hasMany(
+        string $relatedModelPath,
+        string $foreignId,
+        string $localId
+    ): ?array
     {
         $relatedModel = new $relatedModelPath();
 
@@ -224,5 +228,32 @@ abstract class Model
         }
 
         return $models ?? null;
+    }
+
+    public function belongsToMany(
+        string $relatedModelPath,
+        string $commonTable,
+        string $foreignId,
+        string $secondForeignId)
+    {
+        $relatedModel = new $relatedModelPath();
+
+        $localTable = $this->table;
+        $relatedTable = $relatedModel->table;
+
+        $localForeignIdValue = $this->id;
+
+        $query = "SELECT * FROM $commonTable 
+        INNER JOIN $localTable ON $commonTable.$foreignId = $localTable.id
+        INNER JOIN $relatedTable ON $commonTable.$secondForeignId = $relatedTable.id
+        WHERE $localTable.id = :localForeignIdValue";
+
+        $statement = $this->database->getPDO()->prepare($query);
+
+        $statement->bindParam('localForeignIdValue', $localForeignIdValue);
+        $statement->execute();
+
+        $result = $statement->fetchAll(PDO::FETCH_ASSOC);
+        dd($result);
     }
 }
