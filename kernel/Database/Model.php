@@ -259,17 +259,12 @@ abstract class Model
 
         $relatedModelKeys = array_values($relatedModel->fillable);
 
-        // убираем айди
-        if (($keyIndex = array_search('id', $relatedModelKeys)) !== false) {
-            unset($relatedModelKeys[$keyIndex]);
-        }
-
         $relatedModelData = [];
 
         $relatedModels = [];
 
         foreach ($data as $iterator => $item) {
-            $relatedModelData[$iterator] = ['name'];
+            $relatedModelData[$iterator] = [];
 
             foreach ($relatedModelKeys as $key) {
 
@@ -278,16 +273,13 @@ abstract class Model
                 }
 
             }
-
-                $relatedModels[] = new $relatedModelPath($data);
         }
 
-//        foreach ($relatedModelData as $data) {
-//            $relatedModels[] = new $relatedModelPath($data);
-//        }
+        foreach ($relatedModelData as $data) {
+            $relatedModels[] = new $relatedModelPath($data);
+        }
 
-
-        dd($relatedModels);
+        return $relatedModels;
     }
 
 }
