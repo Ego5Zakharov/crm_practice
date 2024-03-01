@@ -3,7 +3,6 @@
 namespace App\Kernel\Database;
 
 use PDO;
-use PDOException;
 
 abstract class Model
 {
@@ -251,9 +250,44 @@ abstract class Model
         $statement = $this->database->getPDO()->prepare($query);
 
         $statement->bindParam('localForeignIdValue', $localForeignIdValue);
-        $statement->execute();
 
-        $result = $statement->fetchAll(PDO::FETCH_ASSOC);
-        dd($result);
+        $data = $statement->execute() ? $statement->fetchAll(PDO::FETCH_ASSOC) : null;
+
+        if (!$data) {
+            return null;
+        }
+
+        $relatedModelKeys = array_values($relatedModel->fillable);
+
+        // убираем айди
+        if (($keyIndex = array_search('id', $relatedModelKeys)) !== false) {
+            unset($relatedModelKeys[$keyIndex]);
+        }
+
+        $relatedModelData = [];
+
+        $relatedModels = [];
+
+        foreach ($data as $iterator => $item) {
+            $relatedModelData[$iterator] = ['name'];
+
+            foreach ($relatedModelKeys as $key) {
+
+                if (array_key_exists($key, $item)) {
+                    $relatedModelData[$iterator][$key] = $item[$key];
+                }
+
+            }
+
+                $relatedModels[] = new $relatedModelPath($data);
+        }
+
+//        foreach ($relatedModelData as $data) {
+//            $relatedModels[] = new $relatedModelPath($data);
+//        }
+
+
+        dd($relatedModels);
     }
+
 }
