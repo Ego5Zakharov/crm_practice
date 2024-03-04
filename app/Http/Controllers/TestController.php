@@ -72,10 +72,11 @@ class TestController extends Controller
         $userRole3->role_id = $role1->id;
         $userRole3->create();
 
-        dd($role1->users());
+//        dd($role1->users());
+
+        dd($user1->where('id', '!=', 925));
 
 //        dd($user1->roles()) ;
-
 
 
 //        dd($user->role());

@@ -2,21 +2,21 @@
 
 namespace App\Kernel\Database;
 
+use App\Kernel\Database\Concerns\HasAttributes;
+use App\Kernel\Database\Concerns\HasRelationships;
+use App\Kernel\Database\Query\Queries;
+use App\Kernel\Database\Support\Arrayable;
 use PDO;
 
-abstract class Model
+abstract class Model implements Arrayable
 {
+    use HasRelationships, HasAttributes, Queries;
+
     // первичный ключ
     protected string $primaryKey = "id";
 
     // подключение к бд
     protected Database $database;
-
-    // оригинальные данные записи подлежащие заполнению
-    protected array $original = [];
-
-    // текущие данные записи(любые)
-    protected array $current = [];
 
     // переменные которые подлежат заполнению в таблице
     protected array $fillable = [];
@@ -26,9 +26,6 @@ abstract class Model
 
     // разрешено ли массовое заполнение
     protected bool $guard = true;
-
-    // связи модели
-    public array $relations = [];
 
     // какие связи модели подгружать сразу
     protected array $with = [];
@@ -54,8 +51,8 @@ abstract class Model
 
         if (array_key_exists($value, $this->original)) {
             return $this->original[$value];
-        } else if (array_key_exists($value, $this->current)) {
-            return $this->current[$value];
+        } else if (array_key_exists($value, $this->getAttributes())) {
+            return $this->getAttribute($value);
         }
 
 
@@ -65,18 +62,16 @@ abstract class Model
     public function __set(mixed $key, mixed $value)
     {
         if ($this->guard && in_array($key, $this->fillable)) {
+
             $this->original[$key] = $value;
         } else if (!$this->guard) {
+
             $this->original[$key] = $value;
         }
 
-        $this->current[$key] = $value;
+        $this->setAttribute($key, $value);
     }
 
-    public function toArray(): array
-    {
-        return $this->original;
-    }
 
     public function create(): Model|static|null
     {
@@ -97,7 +92,7 @@ abstract class Model
         );
 
         $this->original = $model->original;
-        $this->current = $model->current;
+        $this->setAttributes($model->attributes);
 
         return $model;
     }
@@ -154,132 +149,30 @@ abstract class Model
         return $statement->execute();
     }
 
-    /**
-     * путь до модели с которой у нас связь
-     * @param string|Model $relatedModelPath
-     *
-     * ключ который связывает эти модели
-     * @param string $foreignId
-     *
-     * первичный ключ основной таблицы из которой реализуется связь
-     * @param string $originalId
-     * @return mixed
-     */
-    public function hasOne(string $relatedModelPath, string $foreignId, string $originalId): mixed
+    public function toArray(): array
     {
-        $relatedModel = new $relatedModelPath;
-        $relatedModelTable = $relatedModel->table;
-
-        if (!key_exists($foreignId, $this->original)) {
-            return null;
-        }
-
-        $originalIdValue = $this->original[$foreignId];
-
-        $query = "SELECT * FROM $relatedModelTable WHERE $originalId = :$originalId";
-
-        $statement = $this->database->getPDO()->prepare($query);
-
-        $statement->bindParam(":$originalId", $originalIdValue);
-
-        $model = $statement->execute() ? $statement->fetch(PDO::FETCH_ASSOC) : null;
-
-        if (!$model) {
-            return null;
-        }
-        return new $relatedModel($model);
+        return $this->original;
     }
 
-
-    public function hasMany(
-        string $relatedModelPath,
-        string $foreignId,
-        string $localId
-    ): ?array
+    public function where(string $key, string $action, mixed $value)
     {
-        $relatedModel = new $relatedModelPath();
+        $sql = "SELECT * FROM $this->table WHERE $key $action :value";
 
-        $relatedModelTable = $relatedModel->table;
+        $statement = $this->database
+            ->getPDO()
+            ->prepare($sql);
 
-        if (!key_exists($localId, $this->original)) {
-            return null;
-        }
+        $statement->bindParam(':value', $value);
 
-        $localIdValue = $this->id;
-
-        $query = "SELECT * FROM $relatedModelTable WHERE $foreignId = :$localId";
-
-        $statement = $this->database->getPDO()->prepare($query);
-
-        $statement->bindParam(':id', $localIdValue);
-
-        $data = $statement->execute() ? $statement->fetchAll(PDO::FETCH_ASSOC) : null;
-
-        if (!$data) {
-            return null;
-        }
-
-        $models = [];
-
-        foreach ($data as $item) {
-            $model = new $relatedModelPath($item);
-            $models[] = $model;
-        }
-
-        return $models ?? null;
+        return $this;
     }
 
-    public function belongsToMany(
-        string $relatedModelPath,
-        string $commonTable,
-        string $foreignId,
-        string $secondForeignId)
-    {
-        $relatedModel = new $relatedModelPath();
+    public function get(){
 
-        $localTable = $this->table;
-        $relatedTable = $relatedModel->table;
-
-        $localForeignIdValue = $this->id;
-
-        $query = "SELECT * FROM $commonTable 
-        INNER JOIN $localTable ON $commonTable.$foreignId = $localTable.id
-        INNER JOIN $relatedTable ON $commonTable.$secondForeignId = $relatedTable.id
-        WHERE $localTable.id = :localForeignIdValue";
-
-        $statement = $this->database->getPDO()->prepare($query);
-
-        $statement->bindParam('localForeignIdValue', $localForeignIdValue);
-
-        $data = $statement->execute() ? $statement->fetchAll(PDO::FETCH_ASSOC) : null;
-
-        if (!$data) {
-            return null;
-        }
-
-        $relatedModelKeys = array_values($relatedModel->fillable);
-
-        $relatedModelData = [];
-
-        $relatedModels = [];
-
-        foreach ($data as $iterator => $item) {
-            $relatedModelData[$iterator] = [];
-
-            foreach ($relatedModelKeys as $key) {
-
-                if (array_key_exists($key, $item)) {
-                    $relatedModelData[$iterator][$key] = $item[$key];
-                }
-
-            }
-        }
-
-        foreach ($relatedModelData as $data) {
-            $relatedModels[] = new $relatedModelPath($data);
-        }
-
-        return $relatedModels;
     }
 
+    public function getTable(): string
+    {
+        return $this->table;
+    }
 }
