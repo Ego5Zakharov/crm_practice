@@ -2,6 +2,7 @@
 
 namespace App\Kernel\Database;
 
+use App\Kernel\Collections\Collection;
 use App\Kernel\Database\Concerns\HasAttributes;
 use App\Kernel\Database\Concerns\HasRelationships;
 use App\Kernel\Database\Query\Queries;
@@ -149,10 +150,6 @@ abstract class Model implements Arrayable
         return $this->statement->execute();
     }
 
-    public function toArray(): array
-    {
-        return $this->original;
-    }
 
     // TODO добавить выборку из аргументов в селекте
     public function select($table): string
@@ -160,11 +157,43 @@ abstract class Model implements Arrayable
         return "SELECT * FROM $table";
     }
 
-    public function get(): bool|array|null
+    public function get()
     {
-        return $this->statement->execute()
+        $statementResult = $this->statement->execute()
             ? $this->statement->fetchAll(PDO::FETCH_ASSOC)
             : null;
+
+        if (!$statementResult) {
+            return null;
+        }
+
+        $models = [];
+
+        foreach ($statementResult as $data) {
+            $this->setAttributes($data);
+            $this->setOriginals($data);
+
+            $clonedModel = clone $this;
+            $models[] = $clonedModel;
+        }
+
+        return collect($models);
+    }
+
+    public function first(): Model|static|null
+    {
+        $statementResult = $this->statement->execute()
+            ? $this->statement->fetch(PDO::FETCH_ASSOC)
+            : null;
+
+        if (!$statementResult) {
+            return null;
+        }
+
+        $this->setAttributes($statementResult);
+        $this->setOriginals($statementResult);
+
+        return $this;
     }
 
     public function where(string $key, string $action, mixed $value): static
@@ -179,15 +208,23 @@ abstract class Model implements Arrayable
             ->getPDO()
             ->prepare($this->query);
 
-
         $this->statement->bindParam(':value', $value);
 
-        dump($this->statement);
         return $this;
     }
 
     public function getTable(): string
     {
         return $this->table;
+    }
+
+    public function collect(): Collection
+    {
+        return collect($this->attributes);
+    }
+
+    public function toArray(): array
+    {
+        return $this->attributes;
     }
 }

@@ -2,6 +2,7 @@
 
 // helpers
 
+use App\Kernel\Collections\Collection;
 use Dotenv\Dotenv;
 
 if (!function_exists('base_path')) {
@@ -36,3 +37,9 @@ if (!function_exists('app_url')) {
     }
 }
 
+if (!function_exists('collect')) {
+    function collect(array $array): Collection
+    {
+        return new Collection($array);
+    }
+}

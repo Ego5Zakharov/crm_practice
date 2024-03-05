@@ -56,6 +56,11 @@ trait HasAttributes
         $this->original[$key] = $value;
     }
 
+    public function setOriginals(array $values): void
+    {
+        $this->original = $values;
+    }
+
     public function getAttribute(string $key): mixed
     {
         return $this->attributes[$key];
