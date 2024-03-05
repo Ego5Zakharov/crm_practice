@@ -74,7 +74,11 @@ class TestController extends Controller
 
 //        dd($role1->users());
 
-        dd($user1->where('id', '!=', 925));
+        dd($user1
+            ->where('id', '!=', 925)
+            ->where('name', '=', 'Egor')
+            ->get()
+        );
 
 //        dd($user1->roles()) ;
 

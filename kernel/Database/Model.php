@@ -83,9 +83,9 @@ abstract class Model implements Arrayable
 
         $query = "INSERT INTO $this->table ($columns) VALUES ($placeholders)";
 
-        $statement = $this->database::$pdo->prepare($query);
+        $this->statement = $this->database::$pdo->prepare($query);
 
-        $statement->execute($original);
+        $this->statement->execute($original);
 
         $model = $this->find(
             $this->database::$pdo->lastInsertId()
@@ -101,11 +101,11 @@ abstract class Model implements Arrayable
     {
         $query = "SELECT * FROM $this->table WHERE id = :id";
 
-        $statement = $this->database::$pdo->prepare($query);
+        $this->statement = $this->database::$pdo->prepare($query);
 
-        $statement->bindParam('id', $id);
+        $this->statement->bindParam('id', $id);
 
-        $original = $statement->execute() ? $statement->fetch(PDO::FETCH_ASSOC) : null;
+        $original = $this->statement->execute() ? $this->statement->fetch(PDO::FETCH_ASSOC) : null;
 
         if (!$original) {
             return null;
@@ -128,9 +128,9 @@ abstract class Model implements Arrayable
 
         $query = "UPDATE $this->table SET $setClause WHERE id = :id";
 
-        $statement = $this->database::$pdo->prepare($query);
+        $this->statement = $this->database::$pdo->prepare($query);
 
-        return $statement->execute($original);
+        return $this->statement->execute($original);
     }
 
     public function delete(): bool
@@ -139,14 +139,14 @@ abstract class Model implements Arrayable
 
         $query = "DELETE FROM $this->table WHERE id = :id";
 
-        $statement = $this
+        $this->statement = $this
             ->database
             ->getPDO()
             ->prepare($query);
 
-        $statement->bindParam('id', $data['id']);
+        $this->statement->bindParam('id', $data['id']);
 
-        return $statement->execute();
+        return $this->statement->execute();
     }
 
     public function toArray(): array
@@ -154,21 +154,36 @@ abstract class Model implements Arrayable
         return $this->original;
     }
 
-    public function where(string $key, string $action, mixed $value)
+    // TODO добавить выборку из аргументов в селекте
+    public function select($table): string
     {
-        $sql = "SELECT * FROM $this->table WHERE $key $action :value";
-
-        $statement = $this->database
-            ->getPDO()
-            ->prepare($sql);
-
-        $statement->bindParam(':value', $value);
-
-        return $this;
+        return "SELECT * FROM $table";
     }
 
-    public function get(){
+    public function get(): bool|array|null
+    {
+        return $this->statement->execute()
+            ? $this->statement->fetchAll(PDO::FETCH_ASSOC)
+            : null;
+    }
 
+    public function where(string $key, string $action, mixed $value): static
+    {
+        if (str_contains($this->query, 'WHERE')) {
+            $this->concatQuery(" AND $key $action :value");
+        } else {
+            $this->query = "{$this->select($this->table)} WHERE $key $action :value";
+        }
+
+        $this->statement = $this->database
+            ->getPDO()
+            ->prepare($this->query);
+
+
+        $this->statement->bindParam(':value', $value);
+
+        dump($this->statement);
+        return $this;
     }
 
     public function getTable(): string
