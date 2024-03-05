@@ -157,7 +157,7 @@ abstract class Model implements Arrayable
         return "SELECT * FROM $table";
     }
 
-    public function get()
+    public function get(): ?Collection
     {
         $statementResult = $this->statement->execute()
             ? $this->statement->fetchAll(PDO::FETCH_ASSOC)
