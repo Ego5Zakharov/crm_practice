@@ -79,8 +79,8 @@ class TestController extends Controller
 
         dd($user1
             ->where('id', '=', "344")
-            ->where('name', '=', 'Egor')
-            ->where('name','!=','Egor')
+//            ->where('name', '=', 'Egor')
+            ->where('name', 'NOT LIKE', "EGOR")
             ->first()
         );
 

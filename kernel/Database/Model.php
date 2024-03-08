@@ -212,16 +212,21 @@ abstract class Model implements Arrayable
         $this->setBindParams($pureParamValues);
     }
 
-    public function first(): Model|static|null
+    public function prepareQuery(): void
     {
         $this->statement = $this->database::$pdo->prepare($this->query);
+    }
+
+    public function first(): array|static
+    {
+        $this->prepareQuery();
 
         $statementResult = $this->statement->execute($this->getBindParams())
             ? $this->statement->fetch(PDO::FETCH_ASSOC)
             : null;
 
         if (!$statementResult) {
-            return null;
+            return [];
         }
 
         $this->setAttributes($statementResult);

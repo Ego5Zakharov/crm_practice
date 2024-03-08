@@ -24,7 +24,9 @@ trait Queries
         '>',
         '>=',
         '<=',
-        '!='
+        '!=',
+        'LIKE',
+        'NOT LIKE'
     ];
 
     public function getQuery(): string
