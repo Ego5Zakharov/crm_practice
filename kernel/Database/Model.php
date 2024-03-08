@@ -5,8 +5,10 @@ namespace App\Kernel\Database;
 use App\Kernel\Collections\Collection;
 use App\Kernel\Database\Concerns\HasAttributes;
 use App\Kernel\Database\Concerns\HasRelationships;
+use App\Kernel\Database\Query\Exceptions\WhereOperatorNotFoundException;
 use App\Kernel\Database\Query\Queries;
 use App\Kernel\Database\Support\Arrayable;
+use App\Kernel\Helpers\Hash\Hash;
 use PDO;
 
 abstract class Model implements Arrayable
@@ -180,9 +182,41 @@ abstract class Model implements Arrayable
         return collect($models);
     }
 
+    // это делается для того чтобы если в запросе есть несколько дублирующихся ключей,
+    // они не перезаписывали друг друга, а формировали массив по структруре:
+
+    // $значение_хеш_индекс
+
+    // хеш используется чтобы ТОЧНО
+    // различать значения переменных и не перезаписывать их в sql-запросе.
+    // НЕ РАБОТАЕТ)))))))))))))))
+    public function bindStatementParams(): void
+    {
+        $pureParamValues = [];
+
+        foreach ($this->getBindParams() as $key => $value) {
+            $separatorPos = strpos($key, $this->getSeparator());
+
+            $pureKey = substr($key, 0, $separatorPos);
+
+            $stSeparatorString = strrev(substr($key, $separatorPos . strlen($this->getSeparator())));
+
+            $separatorPos = strpos($stSeparatorString, $this->getSeparator());
+
+            $key_numeric = substr($stSeparatorString, 0, $separatorPos);
+
+            $pureKey = $pureKey . "_" . $key_numeric;
+
+            $pureParamValues[$pureKey] = $value;
+        }
+        $this->setBindParams($pureParamValues);
+    }
+
     public function first(): Model|static|null
     {
-        $statementResult = $this->statement->execute()
+        $this->statement = $this->database::$pdo->prepare($this->query);
+
+        $statementResult = $this->statement->execute($this->getBindParams())
             ? $this->statement->fetch(PDO::FETCH_ASSOC)
             : null;
 
@@ -196,19 +230,26 @@ abstract class Model implements Arrayable
         return $this;
     }
 
-    public function where(string $key, string $action, mixed $value): static
+    /**
+     * @throws WhereOperatorNotFoundException
+     */
+    public function where(string $key, mixed $operator, mixed $value): ?static
     {
-        if (str_contains($this->query, 'WHERE')) {
-            $this->concatQuery(" AND $key $action :value");
-        } else {
-            $this->query = "{$this->select($this->table)} WHERE $key $action :value";
+        if (!in_array($operator, $this->getWhereOperators())) {
+            throw new WhereOperatorNotFoundException("$operator does not exist.");
         }
 
-        $this->statement = $this->database
-            ->getPDO()
-            ->prepare($this->query);
+        $paramName = ":param" . (count($this->getBindParams()) + 1); // уникальное имя параметра
 
-        $this->statement->bindParam(':value', $value);
+        $this->incrementWhereCallsCount();
+
+        if (str_contains($this->query, 'WHERE')) {
+            $this->concatQuery(" AND $key $operator $paramName");
+        } else {
+            $this->query = "{$this->select($this->table)} WHERE $key $operator $paramName";
+        }
+
+        $this->bindParam($paramName, $value);
 
         return $this;
     }

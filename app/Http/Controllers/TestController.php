@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Kernel\Controller\Controller;
+use App\Kernel\Database\Query\Exceptions\WhereOperatorNotFoundException;
 use App\Kernel\View\ViewNotFoundException;
 use App\Models\Role;
 use App\Models\User;
@@ -26,6 +27,9 @@ class TestController extends Controller
         return $this->view->view('test/create');
     }
 
+    /**
+     * @throws WhereOperatorNotFoundException
+     */
     public function store()
     {
         $role1 = new Role();
@@ -56,7 +60,6 @@ class TestController extends Controller
         $user3->password = "password";
         $user3->create();
 
-
         $userRole = new UserRole();
         $userRole->user_id = $user1->id;
         $userRole->role_id = $role1->id;
@@ -75,9 +78,10 @@ class TestController extends Controller
 //        dd($role1->users());
 
         dd($user1
-            ->where('id', '!=', 925)
+            ->where('id', '=', "344")
             ->where('name', '=', 'Egor')
-            ->get()
+            ->where('name','!=','Egor')
+            ->first()
         );
 
 //        dd($user1->roles()) ;
