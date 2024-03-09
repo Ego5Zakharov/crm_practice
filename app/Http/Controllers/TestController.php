@@ -78,10 +78,10 @@ class TestController extends Controller
 //        dd($role1->users());
 
         dd($user1
-            ->where('id', '=', "344")
-//            ->where('name', '=', 'Egor')
-            ->where('name', 'NOT LIKE', "EGOR")
-            ->first()
+//            ->where('id', '=', "344")
+            ->where('name', '=', 'Egor')
+//            ->where('name', 'NOT LIKE', "EGO")
+            ->get()
         );
 
 //        dd($user1->roles()) ;

@@ -4,6 +4,7 @@ namespace App\Kernel\Router;
 
 use App\Kernel\Database\Database;
 use App\Kernel\Request\Request;
+use App\Kernel\Route\Route;
 use App\Kernel\Session\Session;
 use App\Kernel\View\View;
 use JetBrains\PhpStorm\NoReturn;
@@ -25,22 +26,59 @@ class Router
         $this->initRoutes();
     }
 
-    public function getRoutes()
+    public function requireRoutes(): array
     {
-        return require_once base_path() . "/config/web.php";
+        $routeFiles = scandir(base_path() . '/routes');
+        $routes = [];
+
+        foreach ($routeFiles as $index => $file) {
+            if ($file !== "."
+                && $file !== ".."
+                && is_file(base_path() . "/routes/" . $file)
+            ) {
+                $routes[] = require_once base_path() . "/routes/" . $file;
+            }
+        }
+
+        return call_user_func_array('array_merge', $routes);
+    }
+
+    public function getRoutes(): array
+    {
+        $routes = $this->requireRoutes();
+
+        foreach ($routes as $key => $route) {
+
+            if (!is_array($route)) {
+                unset($routes[$key]);
+                continue;
+            }
+
+            foreach ($route as $index => $value) {
+                if (!$value && !$value instanceof Route) {
+                    unset($route[$index]);
+                }
+            }
+
+        }
+
+        return $routes;
     }
 
     public function initRoutes(): void
     {
-        $routes = $this->getRoutes();
+        $routeList = $this->getRoutes();
 
-        foreach ($routes as $route) {
-            $this->routes[$route->getMethod()][$route->getUri()] = $route->getAction();
+        foreach ($routeList as $routeListIndex => $routeValue) {
+            foreach ($routeValue as $route) {
+                $this->routes[$route->getMethod()][$route->getUri()] = $route->getAction();
+            }
         }
     }
 
     public function dispatch(string $uri, string $method): void
     {
+
         $route = $this->findRoute($uri, $method);
         if (is_array($route)) {
             $uri = $route[0];

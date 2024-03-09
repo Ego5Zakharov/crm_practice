@@ -2,8 +2,14 @@
 
 namespace App\Kernel\Route;
 
+use App\Kernel\Router\Router;
+
 class Route
 {
+
+    private static string $prefix = "";
+    private static array $routes = [];
+    private static Route $instance;
 
     public function __construct(
         private string $method,
@@ -20,6 +26,28 @@ class Route
         return $this->middlewares;
     }
 
+    public function getInstance(): Route
+    {
+        return self::$instance;
+    }
+
+    public static function prefix(string $name, callable $callable): array
+    {
+        $previousPrefix = debug_backtrace()[2]['args'][0] ?? null;
+
+        if (!is_null($previousPrefix)) {
+            self::$prefix = $previousPrefix . $name;
+        } else {
+            self::$prefix = $name;
+        }
+
+        $callable();
+
+        self::$prefix = "";
+
+        return self::$routes;
+    }
+
     public function setMiddlewares(array $middlewares): void
     {
         $this->middlewares = $middlewares;
@@ -30,7 +58,10 @@ class Route
         mixed  $action,
     ): Route
     {
-        return new Route('GET', $uri, $action, []);
+        $route = new Route('GET', self::$prefix . $uri, $action, []);
+        self::$routes[] = $route;
+
+        return $route;
     }
 
     public static function post(
@@ -38,7 +69,10 @@ class Route
         mixed  $action,
     ): Route
     {
-        return new Route('POST', $uri, $action, []);
+        $route = new Route('POST', self::$prefix . $uri, $action, []);
+        self::$routes[] = $route;
+
+        return $route;
     }
 
     public function setUri(string $uri): void

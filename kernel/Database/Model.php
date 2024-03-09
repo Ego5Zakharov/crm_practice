@@ -161,7 +161,9 @@ abstract class Model implements Arrayable
 
     public function get(): ?Collection
     {
-        $statementResult = $this->statement->execute()
+        $this->prepareQuery();
+
+        $statementResult = $this->statement->execute($this->getBindParams())
             ? $this->statement->fetchAll(PDO::FETCH_ASSOC)
             : null;
 
@@ -244,9 +246,9 @@ abstract class Model implements Arrayable
             throw new WhereOperatorNotFoundException("$operator does not exist.");
         }
 
-        $paramName = ":param" . (count($this->getBindParams()) + 1); // уникальное имя параметра
-
         $this->incrementWhereCallsCount();
+
+        $paramName = ":param" . $this->getWhereCallsCount();
 
         if (str_contains($this->query, 'WHERE')) {
             $this->concatQuery(" AND $key $operator $paramName");
