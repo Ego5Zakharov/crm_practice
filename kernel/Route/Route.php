@@ -33,20 +33,17 @@ class Route
 
     public static function prefix(string $name, callable $callable): array
     {
-        $previousPrefix = debug_backtrace()[2]['args'][0] ?? null;
+        $previousPrefix = self::$prefix;  // Сохранить текущий префикс
 
-        if (!is_null($previousPrefix)) {
-            self::$prefix = $previousPrefix . $name;
-        } else {
-            self::$prefix = $name;
-        }
+        self::$prefix .= $name;
 
         $callable();
 
-        self::$prefix = "";
+        self::$prefix = $previousPrefix;  // Сбросить префикс к предыдущему состоянию
 
         return self::$routes;
     }
+
 
     public function setMiddlewares(array $middlewares): void
     {

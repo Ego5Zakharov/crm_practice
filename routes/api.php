@@ -1,17 +1,22 @@
 <?php
 
-// routes/web.php
-
 use App\Kernel\Route\Route;
 use App\Http\Controllers\TestController;
 
 return [
     Route::prefix('/api', function () {
-        Route::get('/create', [TestController::class, 'create']);
-        Route::post('/post', [TestController::class, 'store']);
 
-        Route::prefix('/users', function () {
+        Route::prefix('/v1', function () {
+            Route::prefix('/users', function () {
+                Route::get('/', [TestController::class, 'index']);
+                Route::post('/', [TestController::class, 'store']);
+            });
+        });
+
+
+        Route::prefix('/test', function () {
             Route::get('/', [TestController::class, 'index']);
         });
+
     })
 ];

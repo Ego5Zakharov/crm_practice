@@ -8,23 +8,13 @@ use App\Kernel\View\ViewNotFoundException;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\UserRole;
+use JetBrains\PhpStorm\NoReturn;
 
 class TestController extends Controller
 {
-    /**
-     * @throws ViewNotFoundException
-     */
-    public function index(): string
+    public function index()
     {
-        return $this->view->view('test', ['test' => []]);
-    }
-
-    /**
-     * @throws ViewNotFoundException
-     */
-    public function create(): string
-    {
-        return $this->view->view('test/create');
+        dd('HELLO');
     }
 
     /**
