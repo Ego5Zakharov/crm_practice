@@ -3,6 +3,7 @@
 // helpers
 
 use App\Kernel\Collections\Collection;
+use App\Kernel\Json\Response;
 use Dotenv\Dotenv;
 
 if (!function_exists('base_path')) {
@@ -41,5 +42,17 @@ if (!function_exists('collect')) {
     function collect(array $array): Collection
     {
         return new Collection($array);
+    }
+}
+
+if (!function_exists('response')) {
+    function response(
+        array $data = [],
+        int   $status = 200,
+        array $headers = [],
+        array $options = []
+    ): Response
+    {
+        return new Response($data, $headers, $options, $status);
     }
 }

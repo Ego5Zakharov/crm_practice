@@ -10,6 +10,9 @@ trait Queries
 
     protected PDOStatement $statement;
 
+    // какое количество записей выбирать из sql запроса
+    protected ?int $limitCount = null;
+
     protected int $whereCallsCount = 0;
 
     protected array $bindParams = [];

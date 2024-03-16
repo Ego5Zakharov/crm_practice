@@ -4,13 +4,16 @@ namespace App\Kernel\Collections;
 
 use App\Kernel\Database\Support\Arrayable;
 
-class Collection
+class Collection implements Arrayable
 {
     protected array $items = [];
 
     public function __construct(array $items = [])
     {
-        $this->items = $items;
+        foreach ($items as $key => $item) {
+            $this->items[] = $item->getAttributes();
+        }
+
     }
 
     public function add(mixed $value): void
@@ -18,7 +21,7 @@ class Collection
         $this->items[] = $value;
     }
 
-    public function all(): array
+    public function toArray(): array
     {
         return $this->items;
     }

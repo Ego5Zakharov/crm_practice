@@ -23,7 +23,7 @@ class User extends Model
 //        return $this->hasOne(Role::class, 'role_id', 'id');
 //    }
 
-    public function roles()
+    public function roles(): ?array
     {
         return $this->belongsToMany(
             Role::class,

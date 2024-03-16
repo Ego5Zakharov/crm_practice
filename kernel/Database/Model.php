@@ -8,8 +8,8 @@ use App\Kernel\Database\Concerns\HasRelationships;
 use App\Kernel\Database\Query\Exceptions\WhereOperatorNotFoundException;
 use App\Kernel\Database\Query\Queries;
 use App\Kernel\Database\Support\Arrayable;
-use App\Kernel\Helpers\Hash\Hash;
 use PDO;
+use PDOStatement;
 
 abstract class Model implements Arrayable
 {
@@ -27,6 +27,9 @@ abstract class Model implements Arrayable
     // название таблицы
     protected string $table = "";
 
+    // копия текущей модели
+    protected static ?Model $instance = null;
+
     // разрешено ли массовое заполнение
     protected bool $guard = true;
 
@@ -36,6 +39,8 @@ abstract class Model implements Arrayable
     public function __construct(array|Model $data = [])
     {
         $this->database = Database::getInstance();
+
+        self::$instance = $this;
 
         foreach ($data as $key => $value) {
             $this->$key = $value;
@@ -136,6 +141,13 @@ abstract class Model implements Arrayable
         return $this->statement->execute($original);
     }
 
+    public function limit(int $count = 12): static
+    {
+        $this->limitCount = $count;
+
+        return $this;
+    }
+
     public function delete(): bool
     {
         $data = $this->toArray();
@@ -152,16 +164,47 @@ abstract class Model implements Arrayable
         return $this->statement->execute();
     }
 
-
     // TODO добавить выборку из аргументов в селекте
     public function select($table): string
     {
-        return "SELECT * FROM $table";
+        if (!$this->limitCount) {
+            return "SELECT * FROM $table";
+        }
+
+        return "SELECT * FROM $table LIMIT $this->limitCount";
+    }
+
+    public function getWithoutBindings(): false|array
+    {
+        $this->query = "{$this->select($this->table)}";
+
+        $statement = $this->prepareQuery();
+
+        return $statement->execute()
+            ? $statement->fetchAll(PDO::FETCH_ASSOC)
+            : [];
     }
 
     public function get(): ?Collection
     {
-        $this->prepareQuery();
+        $query = $this->prepareQuery();
+
+        if (!$query) {
+            $models = [];
+
+            $statementResult = $this->getWithoutBindings();
+
+            foreach ($statementResult as $key => $value) {
+                $clonedModel = clone $this;
+
+                $clonedModel->setAttributes($value);
+                $clonedModel->setOriginals($value);
+
+                $models[] = $clonedModel;
+            }
+
+            return collect($models);
+        }
 
         $statementResult = $this->statement->execute($this->getBindParams())
             ? $this->statement->fetchAll(PDO::FETCH_ASSOC)
@@ -184,39 +227,11 @@ abstract class Model implements Arrayable
         return collect($models);
     }
 
-    // это делается для того чтобы если в запросе есть несколько дублирующихся ключей,
-    // они не перезаписывали друг друга, а формировали массив по структруре:
-
-    // $значение_хеш_индекс
-
-    // хеш используется чтобы ТОЧНО
-    // различать значения переменных и не перезаписывать их в sql-запросе.
-    // НЕ РАБОТАЕТ)))))))))))))))
-    public function bindStatementParams(): void
+    public function prepareQuery(): false|PDOStatement|null
     {
-        $pureParamValues = [];
-
-        foreach ($this->getBindParams() as $key => $value) {
-            $separatorPos = strpos($key, $this->getSeparator());
-
-            $pureKey = substr($key, 0, $separatorPos);
-
-            $stSeparatorString = strrev(substr($key, $separatorPos . strlen($this->getSeparator())));
-
-            $separatorPos = strpos($stSeparatorString, $this->getSeparator());
-
-            $key_numeric = substr($stSeparatorString, 0, $separatorPos);
-
-            $pureKey = $pureKey . "_" . $key_numeric;
-
-            $pureParamValues[$pureKey] = $value;
-        }
-        $this->setBindParams($pureParamValues);
-    }
-
-    public function prepareQuery(): void
-    {
-        $this->statement = $this->database::$pdo->prepare($this->query);
+        return $this->query
+            ? $this->database::$pdo->prepare($this->query)
+            : null;
     }
 
     public function first(): array|static
@@ -259,6 +274,11 @@ abstract class Model implements Arrayable
         $this->bindParam($paramName, $value);
 
         return $this;
+    }
+
+    public static function query(): static
+    {
+        return self::$instance = new static();
     }
 
     public function getTable(): string
