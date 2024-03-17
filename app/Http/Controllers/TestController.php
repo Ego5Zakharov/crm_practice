@@ -18,17 +18,16 @@ class TestController extends Controller
 
         $users = User::query()->limit(100)->get()->toArray();
 
-        $paginator = new LengthAwarePaginator($users, 12, 1);
+        $paginator = new LengthAwarePaginator(
+            $users,
+            $this->request->input('per_page'),
+            $this->request->input('page')
+        );
 
         return response()->json([
             'data' => [
                 $paginator->getItems(),
-
-                'pagination' => [
-                    'totalPages' => $paginator->getTotalPages(),
-                    'currentPage' => $paginator->getCurrentPage(),
-                    'total' => $paginator->getTotal(),
-                ]
+                $paginator->getInfo()
             ]
         ], 200);
     }

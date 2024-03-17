@@ -2,6 +2,8 @@
 
 namespace App\Kernel\Pagination;
 
+use App\Kernel\Config\Config;
+
 class LengthAwarePaginator
 {
     // данные
@@ -13,9 +15,9 @@ class LengthAwarePaginator
     // текущая страница
     protected int $currentPage;
     // ссылка указывающая на предыдущий элемент
-    protected string $prevLink = "";
+    protected ?string $prevLink = "";
     // ссылка указывающая на следующий элемент
-    protected string $nextLink = "";
+    protected ?string $nextLink = "";
 
     /**
      * @param array $data
@@ -27,31 +29,89 @@ class LengthAwarePaginator
      */
     public function __construct(array $data = [], int $perPage = 12, int $page = 1)
     {
-        // количество элементов
-        $dataCount = count($data);
-        // общее колво страниц
-        $totalPages = (int)ceil($dataCount / $perPage);
+        $itemsCount = count($data);
 
-        // если $page больше 1
-        // узнаем номер страницы на которой сейчас находится пользователь
-        // иначе - 0
+        $totalPages = (int)ceil($itemsCount / $perPage);
+
         $start = ($page > 1) ? ($page * $perPage) - $perPage : 0;
 
         // выбираем промежуток данных текущей страницы
-        $this->items = array_slice($data, $start, $perPage);
+        $this->setItems(array_slice($data, $start, $perPage));
 
         $this->setTotalPages($totalPages);
         $this->setCurrentPage($page);
-        $this->setTotal($dataCount);
+        $this->setTotal($itemsCount);
 
         // если предыдущего элемента несуществует - null
-        $prevLink = $page - 1 <= 0 ? null : $page + 1;
 
-        $appUrl = config('app.');
-
-        dd($prevLink);
+        $this->metaConfiguration($page);
     }
 
+    public function metaConfiguration(int $page): void
+    {
+        $oldUrl = request()->fullUrl();
+
+        $queryParams = [];
+
+        $parseOldUrlQuery = parse_url($oldUrl)['query'];
+
+        parse_str($parseOldUrlQuery, $queryParams);
+
+        $newUrl = app_url() . request()->uri();
+
+        $counter = 0;
+
+        $nextUrl = $newUrl;
+        $prevUrl = $newUrl;
+
+        foreach ($queryParams as $index => $param) {
+
+            if ($index === 'page') {
+                $param = $param + 1;
+            }
+
+            if ($counter === 0) {
+                $nextUrl .= "?$index=$param";
+            } else {
+                $nextUrl .= "&$index=$param";
+            }
+            $counter++;
+        }
+        foreach ($queryParams as $index => $param) {
+
+            if ($index === 'page') {
+                $param = $param - 1;
+            }
+
+            if ($counter === 0) {
+                $prevUrl .= "?$index=$param";
+            } else {
+                $prevUrl .= "&$index=$param";
+            }
+            $counter++;
+        }
+
+        $prevUrl = $page - 1 <= 0 ? null : $prevUrl;
+        $nextUrl = $page >= $this->getTotalPages() ? null : $nextUrl;
+
+        $this->setPrevLink($prevUrl);
+        $this->setNextLink($nextUrl);
+    }
+
+    public function getInfo(string $varName = 'pagination'): array
+    {
+        return [
+            "$varName" => [
+                'totalPages' => $this->getTotalPages(),
+                'currentPage' => $this->getCurrentPage(),
+                'total' => $this->getTotal(),
+                'meta' => [
+                    'prev' => $this->getPrevLink(),
+                    'next' => $this->getNextLink()
+                ],
+            ]
+        ];
+    }
 
     public function getItems(): array
     {
@@ -93,22 +153,22 @@ class LengthAwarePaginator
         $this->currentPage = $currentPage;
     }
 
-    public function getPrevLink(): string
+    public function getPrevLink(): ?string
     {
         return $this->prevLink;
     }
 
-    public function setPrevLink(string $prevLink): void
+    public function setPrevLink(?string $prevLink): void
     {
         $this->prevLink = $prevLink;
     }
 
-    public function getNextLink(): string
+    public function getNextLink(): ?string
     {
         return $this->nextLink;
     }
 
-    public function setNextLink(string $nextLink): void
+    public function setNextLink(?string $nextLink): void
     {
         $this->nextLink = $nextLink;
     }

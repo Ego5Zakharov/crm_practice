@@ -3,7 +3,9 @@
 // helpers
 
 use App\Kernel\Collections\Collection;
+use App\Kernel\Config\Config;
 use App\Kernel\Json\Response;
+use App\Kernel\Request\Request;
 use Dotenv\Dotenv;
 
 if (!function_exists('base_path')) {
@@ -45,6 +47,12 @@ if (!function_exists('collect')) {
     }
 }
 
+if (!function_exists('config')) {
+    function config(string $key, ?string $default = null): mixed
+    {
+        return Config::get($key, $default);
+    }
+}
 if (!function_exists('response')) {
     function response(
         array $data = [],
@@ -54,5 +62,12 @@ if (!function_exists('response')) {
     ): Response
     {
         return new Response($data, $headers, $options, $status);
+    }
+}
+
+if (!function_exists('request')) {
+    function request(): Request
+    {
+        return Request::initialization();
     }
 }

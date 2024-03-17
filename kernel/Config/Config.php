@@ -4,7 +4,7 @@ namespace App\Kernel\Config;
 
 class Config
 {
-    public function get(string $key, string $default = null): mixed
+    public static function get(string $key, string $default = null): mixed
     {
         $keyParts = explode('.', $key);
 

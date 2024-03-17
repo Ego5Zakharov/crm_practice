@@ -2,6 +2,8 @@
 
 namespace App\Kernel\Request;
 
+use App\Kernel\Config\Config;
+
 class Request
 {
     public function __construct(
@@ -30,6 +32,35 @@ class Request
         return strtok($this->server['REQUEST_URI'], '?');
     }
 
+    public function query(): ?string
+    {
+        $url = config('app.url') . $this->server['REQUEST_URI'];
+
+        return parse_url($url)['query'] ?? null;
+    }
+
+    public function params(): ?array
+    {
+        $url = $this->query();
+
+        $parsedUrl = parse_url($url)['path'];
+
+        $queryParams = [];
+
+        if ($parsedUrl) {
+            parse_str($parsedUrl, $queryParams);
+            return $queryParams;
+        }
+
+        return null;
+    }
+
+
+    public function fullUrl(): string
+    {
+        return config('app.url') . $this->server['REQUEST_URI'];
+    }
+
     public function get(): array
     {
         return $this->get;
@@ -55,11 +86,11 @@ class Request
         return $this->files;
     }
 
-    public function input(string $argument, ?string $default)
+    public function input(string $argument, ?string $default = null)
     {
         return $this->get[$argument]
+            ?? $this->params()[$argument]
             ?? $this->post[$argument]
             ?? $default;
     }
-
 }
