@@ -5,18 +5,19 @@ namespace App\Kernel\Database;
 use App\Kernel\Collections\Collection;
 use App\Kernel\Database\Concerns\HasAttributes;
 use App\Kernel\Database\Concerns\HasRelationships;
+use App\Kernel\Database\Query\Builder;
 use App\Kernel\Database\Query\Exceptions\WhereOperatorNotFoundException;
-use App\Kernel\Database\Query\Queries;
 use App\Kernel\Database\Support\Arrayable;
 use PDO;
-use PDOStatement;
 
 abstract class Model implements Arrayable
 {
-    use HasRelationships, HasAttributes, Queries;
+    use HasRelationships, HasAttributes;
 
     // первичный ключ
     protected string $primaryKey = "id";
+
+    protected ?Builder $builder;
 
     // подключение к бд
     protected Database $database;
@@ -40,11 +41,13 @@ abstract class Model implements Arrayable
     {
         $this->database = Database::getInstance();
 
-        self::$instance = $this;
+        $this->builder = new Builder($this->database);
 
         foreach ($data as $key => $value) {
             $this->$key = $value;
         }
+
+        self::$instance = $this;
 
         // relations
     }
@@ -89,37 +92,48 @@ abstract class Model implements Arrayable
 
         $placeholders = ':' . implode(', :', array_keys($original));
 
-        $query = "INSERT INTO $this->table ($columns) VALUES ($placeholders)";
-
-        $this->statement = $this->database::$pdo->prepare($query);
-
-        $this->statement->execute($original);
-
-        $model = $this->find(
-            $this->database::$pdo->lastInsertId()
+        $this->builder->setQuery(
+            "INSERT INTO {$this->getTable()} ($columns) VALUES ($placeholders)"
         );
 
-        $this->original = $model->original;
+        $this->builder->prepareQuery();
+
+        $this->builder->setBindParams($original);
+
+        $this->builder->getStatement()->execute($this->builder->getBindParams());
+
+        $model = $this->find(
+            $this->builder->getDatabase()::$pdo->lastInsertId()
+        );
+
+        $this->setOriginals($model->original);
         $this->setAttributes($model->attributes);
 
         return $model;
     }
 
-    public function find(int $id): Model|static|null
+
+    public function find(Model|int $param): Model|static|null
     {
-        $query = "SELECT * FROM $this->table WHERE id = :id";
+        $this->builder->setQuery("{$this->select($this->table)} WHERE id = :id");
 
-        $this->statement = $this->database::$pdo->prepare($query);
+        if ($param instanceof Model) {
+            $param = $param->getAttribute('id');
+        }
 
-        $this->statement->bindParam('id', $id);
+        $this->builder->prepareQuery();
 
-        $original = $this->statement->execute() ? $this->statement->fetch(PDO::FETCH_ASSOC) : null;
+        $this->builder->getStatement()->bindParam(':id', $param);
+
+        $original = $this->builder->getStatement()->execute()
+            ? $this->builder->getStatement()->fetch(PDO::FETCH_ASSOC)
+            : null;
 
         if (!$original) {
             return null;
         }
 
-        return new $this($original);
+        return new static($original);
     }
 
     public function update(): bool
@@ -134,16 +148,16 @@ abstract class Model implements Arrayable
 
         $setClause = implode(',', $setClause);
 
-        $query = "UPDATE $this->table SET $setClause WHERE id = :id";
+        $this->builder->setQuery("UPDATE {$this->getTable()} SET $setClause WHERE id = :id");
 
-        $this->statement = $this->database::$pdo->prepare($query);
+        $this->builder->prepareQuery();
 
-        return $this->statement->execute($original);
+        return $this->builder->getStatement()->execute($original);
     }
 
     public function limit(int $count = 12): static
     {
-        $this->limitCount = $count;
+        $this->builder->setLimitCount($count);
 
         return $this;
     }
@@ -152,94 +166,145 @@ abstract class Model implements Arrayable
     {
         $data = $this->toArray();
 
-        $query = "DELETE FROM $this->table WHERE id = :id";
+        $this->builder->setQuery(
+            "DELETE FROM {$this->getTable()} WHERE id = :id"
+        );
 
-        $this->statement = $this
-            ->database
-            ->getPDO()
-            ->prepare($query);
+        $this->builder->prepareQuery();
 
-        $this->statement->bindParam('id', $data['id']);
+        $this->builder->getStatement()->bindParam('id', $data['id']);
 
-        return $this->statement->execute();
+        return $this->builder->getStatement()->execute();
     }
 
     // TODO добавить выборку из аргументов в селекте
     public function select($table): string
     {
-        if (!$this->limitCount) {
-            return "SELECT * FROM $table";
+        if (!$this->builder->getLimitCount()) {
+            return "SELECT * FROM {$this->getTable()}";
         }
 
-        return "SELECT * FROM $table LIMIT $this->limitCount";
+        return "SELECT * FROM {$this->getTable()} LIMIT {$this->builder->getLimitCount()}";
     }
 
-    public function getWithoutBindings(): false|array
+    public function selectWithoutBindings(): string
     {
-        $this->query = "{$this->select($this->table)}";
-
-        $statement = $this->prepareQuery();
-
-        return $statement->execute()
-            ? $statement->fetchAll(PDO::FETCH_ASSOC)
-            : [];
+        return "SELECT * FROM {$this->getTable()}";
     }
 
-    public function get(): ?Collection
+    public function paginate(int $perPage = 12, int $page = 1)
     {
-        $query = $this->prepareQuery();
+        // получить общее количество
+        // получать perPage количество элементов из запроса
+        $totalCount = $this->select();
 
-        if (!$query) {
-            $models = [];
+        $this->setQuery($this->select($this->table));
+        dd($this->getQuery());
+    }
 
-            $statementResult = $this->getWithoutBindings();
 
-            foreach ($statementResult as $key => $value) {
-                $clonedModel = clone $this;
 
-                $clonedModel->setAttributes($value);
-                $clonedModel->setOriginals($value);
-
-                $models[] = $clonedModel;
-            }
-
-            return collect($models);
+    // если вызывается метод с where, limit и тд - вызываем getWithParams
+    // иначе - getWithoutBindings
+    public function get(): Collection|false|array
+    {
+        if ($this->builder->getQuery()) {
+            return $this->getWithParams();
         }
 
-        $statementResult = $this->statement->execute($this->getBindParams())
-            ? $this->statement->fetchAll(PDO::FETCH_ASSOC)
+        return $this->getWithoutBindings();
+    }
+
+    private function getWithParams(): Collection|array
+    {
+        $this->builder->prepareQuery();
+
+        $fetchData = $this->builder->getStatement()->execute($this->builder->getBindParams())
+            ? $this->builder->getStatement()->fetchAll(PDO::FETCH_ASSOC)
             : null;
 
-        if (!$statementResult) {
-            return null;
+        if (!$fetchData) {
+            return [];
         }
 
         $models = [];
 
-        foreach ($statementResult as $data) {
-            $this->setAttributes($data);
-            $this->setOriginals($data);
-
+        foreach ($fetchData as $key => $value) {
             $clonedModel = clone $this;
+
+            $clonedModel->setOriginals($value);
+            $clonedModel->setAttributes($value);
+
             $models[] = $clonedModel;
         }
 
         return collect($models);
     }
 
-    public function prepareQuery(): false|PDOStatement|null
+    private function getWithoutBindings(): array|Collection
     {
-        return $this->query
-            ? $this->database::$pdo->prepare($this->query)
-            : null;
+        $this->builder->setQuery("{$this->select($this->table)}");
+
+        $this->builder->prepareQuery();
+
+        $fetchData = $this->builder->getStatement()->execute()
+            ? $this->builder->getStatement()->fetchAll(PDO::FETCH_ASSOC)
+            : [];
+
+        if (!$fetchData) {
+            return [];
+        }
+
+        $models = [];
+
+        foreach ($fetchData as $key => $value) {
+            $clonedModel = clone $this;
+
+            $clonedModel->setOriginals($value);
+            $clonedModel->setAttributes($value);
+
+            $models[] = $clonedModel;
+        }
+
+        return collect($models);
     }
 
-    public function first(): array|static
+    // если вызывается метод с where, limit и тд - вызываем firstWithParams
+    // иначе - firstWithoutBindings
+    public function first(): array|static|null
     {
-        $this->prepareQuery();
+        if ($this->builder->getQuery()) {
+            return $this->firstWithParams();
+        }
 
-        $statementResult = $this->statement->execute($this->getBindParams())
-            ? $this->statement->fetch(PDO::FETCH_ASSOC)
+        return $this->firstWithoutBindings();
+    }
+
+    private function firstWithParams(): null|static
+    {
+        $this->builder->concatQuery(" LIMIT 1");
+
+        $this->builder->prepareQuery();
+
+        $fetchData = $this->builder->getStatement()->execute($this->builder->getBindParams())
+            ? $this->builder->getStatement()->fetch(PDO::FETCH_ASSOC)
+            : null;
+
+        if (!$fetchData) {
+            return null;
+        }
+
+        return new static($fetchData);
+    }
+
+    private function firstWithoutBindings(): array|static
+    {
+        $this->builder->setQuery("{$this->select($this->table)} ORDER BY id ASC LIMIT 1");
+
+        $this->builder->prepareQuery();
+
+        $statementResult = $this->builder->getStatement()->execute()
+            ? $this->builder->getStatement()->fetch(PDO::FETCH_ASSOC)
             : null;
 
         if (!$statementResult) {
@@ -252,26 +317,27 @@ abstract class Model implements Arrayable
         return $this;
     }
 
+
     /**
      * @throws WhereOperatorNotFoundException
      */
     public function where(string $key, mixed $operator, mixed $value): ?static
     {
-        if (!in_array($operator, $this->getWhereOperators())) {
+        if (!in_array($operator, $this->builder->getWhereOperators())) {
             throw new WhereOperatorNotFoundException("$operator does not exist.");
         }
 
-        $this->incrementWhereCallsCount();
+        $this->builder->incrementWhereCallsCount();
 
-        $paramName = ":param" . $this->getWhereCallsCount();
+        $paramName = ":param" . $this->builder->getWhereCallsCount();
 
-        if (str_contains($this->query, 'WHERE')) {
-            $this->concatQuery(" AND $key $operator $paramName");
+        if (str_contains($this->builder->getQuery(), 'WHERE')) {
+            $this->builder->concatQuery(" AND $key $operator $paramName");
         } else {
-            $this->query = "{$this->select($this->table)} WHERE $key $operator $paramName";
+            $this->builder->setQuery("{$this->select($this->table)} WHERE $key $operator $paramName");
         }
 
-        $this->bindParam($paramName, $value);
+        $this->builder->bindParam($paramName, $value);
 
         return $this;
     }
@@ -279,6 +345,11 @@ abstract class Model implements Arrayable
     public static function query(): static
     {
         return self::$instance = new static();
+    }
+
+    public function freshQuery(): void
+    {
+        $this->builder->setQuery("");
     }
 
     public function getTable(): string
@@ -293,6 +364,6 @@ abstract class Model implements Arrayable
 
     public function toArray(): array
     {
-        return $this->attributes;
+        return $this->getAttributes();
     }
 }
