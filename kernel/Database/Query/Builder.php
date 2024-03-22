@@ -3,6 +3,7 @@
 namespace App\Kernel\Database\Query;
 
 use App\Kernel\Database\Database;
+use PDO;
 use PDOStatement;
 
 class Builder
@@ -49,6 +50,22 @@ class Builder
                 ? $this->database->getPDO()->prepare($this->getQuery())
                 : null
         );
+    }
+
+    public function execute(): static
+    {
+        $this->getStatement()->execute();
+        return $this;
+    }
+
+    public function fetch()
+    {
+        return $this->getStatement()->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function fetchAll(): false|array
+    {
+        return $this->getStatement()->fetchAll(PDO::FETCH_ASSOC);
     }
 
 

@@ -2,6 +2,7 @@
 
 namespace App\Kernel\Pagination;
 
+use App\Kernel\Collections\Collection;
 use App\Kernel\Config\Config;
 
 class LengthAwarePaginator
@@ -27,8 +28,12 @@ class LengthAwarePaginator
      * @param int $page
      * текущая страница
      */
-    public function __construct(array $data = [], int $perPage = 12, int $page = 1)
+    public function __construct(array|Collection $data = [], int $perPage = 12, int $page = 1)
     {
+        if ($data instanceof Collection) {
+            $data = $data->toArray();
+        }
+
         $itemsCount = count($data);
 
         $totalPages = (int)ceil($itemsCount / $perPage);
@@ -98,9 +103,11 @@ class LengthAwarePaginator
         $this->setNextLink($nextUrl);
     }
 
-    public function getInfo(string $varName = 'pagination'): array
+    public function getInfo(string $varName = 'pagination', bool $withoutItems = false): array
     {
         return [
+            'items' => $withoutItems ? [] : $this->getItems(),
+
             "$varName" => [
                 'totalPages' => $this->getTotalPages(),
                 'currentPage' => $this->getCurrentPage(),

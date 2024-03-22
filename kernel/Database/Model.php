@@ -8,6 +8,7 @@ use App\Kernel\Database\Concerns\HasRelationships;
 use App\Kernel\Database\Query\Builder;
 use App\Kernel\Database\Query\Exceptions\WhereOperatorNotFoundException;
 use App\Kernel\Database\Support\Arrayable;
+use App\Kernel\Pagination\LengthAwarePaginator;
 use PDO;
 
 abstract class Model implements Arrayable
@@ -194,15 +195,51 @@ abstract class Model implements Arrayable
 
     public function paginate(int $perPage = 12, int $page = 1)
     {
-        // получить общее количество
-        // получать perPage количество элементов из запроса
-        $totalCount = $this->select();
+        $builder = $this->newBuilder();
 
-        $this->setQuery($this->select($this->table));
-        dd($this->getQuery());
+        $builder->setQuery("SELECT COUNT(*) as total FROM {$this->getTable()}");
+
+        $builder->prepareQuery();
+
+        $totalCount = $builder->execute()->fetch()['total'];
+
+        if (!$totalCount) {
+            return [];
+        }
+
+        // какое количество элементов пропустить
+        $offset = ($page - 1) * $perPage;
+
+        $this->builder->setQuery("{$this->select($this->table)} LIMIT $offset, $perPage");
+
+        $this->builder->prepareQuery();
+
+        $fetchData = ($this->builder->execute()->fetchAll());
+
+        $models = [];
+
+        foreach ($fetchData as $key => $value) {
+            $clonedModel = clone $this;
+            $clonedModel->setAttributes($value);
+            $clonedModel->setOriginals($value);
+            $models[] = $clonedModel;
+        }
+
+        $collection = collect($models);
+        $paginator = new LengthAwarePaginator($collection, $perPage, 1);
+
+        $paginator->setTotal($totalCount);
+        $paginator->setTotalPages($totalCount / $perPage);
+        $paginator->setCurrentPage($page);
+        $paginator->metaConfiguration($page);
+
+        return $paginator->getInfo();
     }
 
-
+    private function newBuilder(): Builder
+    {
+        return new Builder($this->database);
+    }
 
     // если вызывается метод с where, limit и тд - вызываем getWithParams
     // иначе - getWithoutBindings

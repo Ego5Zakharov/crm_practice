@@ -12,22 +12,10 @@ class TestController extends Controller
 {
     public function index(): Response
     {
-        $user = new User();
-
-        $user->setAttribute('name', 'Egor');
-        $user->setAttribute('email', 'egor@mail.ru');
-        $user->setAttribute('password', '12345678');
-
-        $user = $user->create();
-
-        $user->setAttribute('email', 'egorUPDATE@mail.ru');
-
-        $user->update();
-
-        $user->freshQuery();
-
-        dd($user->where('id','=','2118')->first());
-
+        $users = User::query()->paginate(
+            $this->request->input('per_page'),
+            $this->request->input('page')
+        );
 //        dd($user->delete());
 
 
@@ -43,7 +31,7 @@ class TestController extends Controller
 //
         return response()->json([
             'data' => [
-//                $users
+                $users
             ]
         ], 200);
     }
