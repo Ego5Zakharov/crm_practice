@@ -12,16 +12,20 @@ class User extends Model
 
     protected bool $guard = true;
 
+    protected array $with = [
+        'role'
+    ];
+
     protected array $fillable = [
         'id',
         'name', 'email', 'password',
         'role_id'
     ];
 
-//    public function role()
-//    {
-//        return $this->hasOne(Role::class, 'role_id', 'id');
-//    }
+    public function role()
+    {
+        return $this->hasOne(Role::class, 'role_id', 'id');
+    }
 
     public function roles(): ?array
     {

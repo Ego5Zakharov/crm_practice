@@ -11,7 +11,10 @@ class Collection implements Arrayable
     public function __construct(array $items = [])
     {
         foreach ($items as $key => $item) {
-            $this->items[] = $item->getAttributes();
+            $this->items[$key] = $item->getAttributes();
+            if (!empty($item->getWithRelations())) {
+                $this->items[$key]['relations'] = $item->getWithRelations();
+            }
         }
 
     }

@@ -9,6 +9,7 @@ use App\Kernel\Database\Query\Builder;
 use App\Kernel\Database\Query\Exceptions\WhereOperatorNotFoundException;
 use App\Kernel\Database\Support\Arrayable;
 use App\Kernel\Pagination\LengthAwarePaginator;
+use Dotenv\Dotenv;
 use PDO;
 
 abstract class Model implements Arrayable
@@ -17,8 +18,6 @@ abstract class Model implements Arrayable
 
     // первичный ключ
     protected string $primaryKey = "id";
-
-    protected ?Builder $builder;
 
     // подключение к бд
     protected Database $database;
@@ -38,6 +37,8 @@ abstract class Model implements Arrayable
     // какие связи модели подгружать сразу
     protected array $with = [];
 
+    protected ?Builder $builder;
+
     public function __construct(array|Model $data = [])
     {
         $this->database = Database::getInstance();
@@ -49,8 +50,6 @@ abstract class Model implements Arrayable
         }
 
         self::$instance = $this;
-
-        // relations
     }
 
     public function __get(string $value)
@@ -66,7 +65,6 @@ abstract class Model implements Arrayable
         } else if (array_key_exists($value, $this->getAttributes())) {
             return $this->getAttribute($value);
         }
-
 
         return null;
     }
@@ -85,7 +83,30 @@ abstract class Model implements Arrayable
     }
 
 
-    public function create(): Model|static|null
+    public function create(array $data = []): Model|static|null
+    {
+        if (empty($data)) {
+            return $this->createWithoutData();
+        }
+
+        return $this->createWithData($data);
+    }
+
+    private function createWithData(array $data): Model|static|null
+    {
+        $columns = implode(', ', array_keys($data));
+
+        $placeholders = ":" . implode(', :', array_keys($data));
+
+        $this->builder->setQuery("INSERT INTO {$this->getTable()} ($columns) VALUES ($placeholders)");
+        $this->builder->prepareQuery();
+        $this->builder->setBindParams($data);
+        $this->builder->execute();
+
+        return $this->find($this->builder->getDatabase()->getPDO()->lastInsertId());
+    }
+
+    private function createWithoutData(): Model|static|null
     {
         $original = $this->toArray();
 
@@ -103,16 +124,10 @@ abstract class Model implements Arrayable
 
         $this->builder->getStatement()->execute($this->builder->getBindParams());
 
-        $model = $this->find(
+        return $this->find(
             $this->builder->getDatabase()::$pdo->lastInsertId()
         );
-
-        $this->setOriginals($model->original);
-        $this->setAttributes($model->attributes);
-
-        return $model;
     }
-
 
     public function find(Model|int $param): Model|static|null
     {
@@ -137,13 +152,46 @@ abstract class Model implements Arrayable
         return new static($original);
     }
 
-    public function update(): bool
+    public function update(array $data = []): bool
     {
-        $original = $this->toArray();
+        if (empty($data)) {
+            return $this->updateWithoutData();
+        }
+
+        return $this->updateWithData($data);
+    }
+
+    private function updateWithData(array $data): bool
+    {
+        $setClause = [];
+
+        foreach ($data as $key => $value) {
+            $setClause[] = "$key = :$key";
+        }
+
+        $placeholders = implode(', ', $setClause);
+
+        $this->builder->setQuery("UPDATE {$this->getTable()} SET $placeholders WHERE id = :id");
+        $this->builder->prepareQuery();
+        $this->builder->setBindParams($data);
+        $this->builder->bindParam(':id',$this->getAttribute('id'));
+
+        return $this->builder->pureExecute();
+    }
+
+    // обновление данных о пользователе
+    public function fresh(): Model|static|null
+    {
+        return $this->find($this->getAttribute('id'));
+    }
+
+    private function updateWithoutData(): bool
+    {
+        $attributes = $this->toArray();
 
         $setClause = [];
 
-        foreach ($original as $key => $item) {
+        foreach ($attributes as $key => $item) {
             $setClause[] = "$key = :$key";
         }
 
@@ -153,7 +201,7 @@ abstract class Model implements Arrayable
 
         $this->builder->prepareQuery();
 
-        return $this->builder->getStatement()->execute($original);
+        return $this->builder->getStatement()->execute($attributes);
     }
 
     public function limit(int $count = 12): static
@@ -188,12 +236,12 @@ abstract class Model implements Arrayable
         return "SELECT * FROM {$this->getTable()} LIMIT {$this->builder->getLimitCount()}";
     }
 
-    public function selectWithoutBindings(): string
+    private function selectWithoutBindings(): string
     {
         return "SELECT * FROM {$this->getTable()}";
     }
 
-    public function paginate(int $perPage = 12, int $page = 1)
+    public function paginate(int $perPage = 12, int $page = 1): array
     {
         $builder = $this->newBuilder();
 
@@ -211,10 +259,9 @@ abstract class Model implements Arrayable
         $offset = ($page - 1) * $perPage;
 
         $this->builder->setQuery("{$this->select($this->table)} LIMIT $offset, $perPage");
-
         $this->builder->prepareQuery();
 
-        $fetchData = ($this->builder->execute()->fetchAll());
+        $fetchData = $this->builder->execute()->fetchAll();
 
         $models = [];
 
@@ -222,6 +269,9 @@ abstract class Model implements Arrayable
             $clonedModel = clone $this;
             $clonedModel->setAttributes($value);
             $clonedModel->setOriginals($value);
+            $clonedModel->with($this->getWithRelations());
+            $clonedModel->unsetWithRelationsKeys();
+
             $models[] = $clonedModel;
         }
 
@@ -271,6 +321,8 @@ abstract class Model implements Arrayable
 
             $clonedModel->setOriginals($value);
             $clonedModel->setAttributes($value);
+            $clonedModel->with($this->getWithRelations());
+            $clonedModel->unsetWithRelationsKeys();
 
             $models[] = $clonedModel;
         }
@@ -299,6 +351,8 @@ abstract class Model implements Arrayable
 
             $clonedModel->setOriginals($value);
             $clonedModel->setAttributes($value);
+            $clonedModel->with($this->getWithRelations());
+            $clonedModel->unsetWithRelationsKeys();
 
             $models[] = $clonedModel;
         }
@@ -331,7 +385,11 @@ abstract class Model implements Arrayable
             return null;
         }
 
-        return new static($fetchData);
+        $model = new $this($fetchData);
+        $model->with($this->getWithRelations());
+        $model->unsetWithRelationsKeys();
+
+        return $model;
     }
 
     private function firstWithoutBindings(): array|static
@@ -348,35 +406,45 @@ abstract class Model implements Arrayable
             return [];
         }
 
-        $this->setAttributes($statementResult);
-        $this->setOriginals($statementResult);
+        $model = new $this($statementResult);
+        $model->with($this->getWithRelations());
+        $model->unsetWithRelationsKeys();
+
+        return $model;
+    }
+
+    public function where(string $key, mixed $operator, mixed $value): ?static
+    {
+        try {
+            if (!in_array($operator, $this->builder->getWhereOperators())) {
+                throw new WhereOperatorNotFoundException("$operator does not exist.");
+            }
+
+            $this->builder->incrementWhereCallsCount();
+
+            $paramName = ":param" . $this->builder->getWhereCallsCount();
+
+            if (str_contains($this->builder->getQuery(), 'WHERE')) {
+                $this->builder->concatQuery(" AND $key $operator $paramName");
+            } else {
+                $this->builder->setQuery("{$this->select($this->table)} WHERE $key $operator $paramName");
+            }
+
+            $this->builder->bindParam($paramName, $value);
+        } catch (WhereOperatorNotFoundException $exception) {
+            // TODO Log Exceptions
+        }
 
         return $this;
     }
 
-
-    /**
-     * @throws WhereOperatorNotFoundException
-     */
-    public function where(string $key, mixed $operator, mixed $value): ?static
+    public function with(array $relations = []): void
     {
-        if (!in_array($operator, $this->builder->getWhereOperators())) {
-            throw new WhereOperatorNotFoundException("$operator does not exist.");
+        foreach ($relations as $index => $relation) {
+            if (method_exists($this, $relation)) {
+                $this->setWithRelation($relation, $this->$relation);
+            }
         }
-
-        $this->builder->incrementWhereCallsCount();
-
-        $paramName = ":param" . $this->builder->getWhereCallsCount();
-
-        if (str_contains($this->builder->getQuery(), 'WHERE')) {
-            $this->builder->concatQuery(" AND $key $operator $paramName");
-        } else {
-            $this->builder->setQuery("{$this->select($this->table)} WHERE $key $operator $paramName");
-        }
-
-        $this->builder->bindParam($paramName, $value);
-
-        return $this;
     }
 
     public static function query(): static
@@ -394,9 +462,42 @@ abstract class Model implements Arrayable
         return $this->table;
     }
 
+    public function getWithRelations(): array
+    {
+        return $this->with;
+    }
+
+    public function getWithRelation(string $key)
+    {
+        return $this->with[$key];
+    }
+
     public function collect(): Collection
     {
         return collect($this->attributes);
+    }
+
+    public function mergeData(): ?array
+    {
+        return array_merge($this->getAttributes(), $this->getRelations());
+    }
+
+    // удаляет все индексы которые имеею структуру не
+    //    [
+    //      'relation'=>['relationData']
+    //    ]
+    public function unsetWithRelationsKeys(): void
+    {
+        foreach (array_keys($this->getWithRelations()) as $index) {
+            if (is_numeric($index)) {
+                unset($this->with[$index]);
+            }
+        }
+    }
+
+    public function newQuery(): static
+    {
+        return $this::query();
     }
 
     public function toArray(): array

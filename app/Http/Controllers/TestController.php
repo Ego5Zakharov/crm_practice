@@ -3,19 +3,42 @@
 namespace App\Http\Controllers;
 
 use App\Kernel\Controller\Controller;
+use App\Kernel\Database\Query\Exceptions\WhereOperatorNotFoundException;
 use App\Kernel\Json\Response;
-use App\Kernel\Pagination\LengthAwarePaginator;
+use App\Models\Role;
 use App\Models\User;
 use Dotenv\Dotenv;
 
 class TestController extends Controller
 {
+
     public function index(): Response
     {
-        $users = User::query()->paginate(
-            $this->request->input('per_page'),
-            $this->request->input('page')
-        );
+        $user = User::query()->create([
+            'name' => 'egor',
+            'email' => 'egor@email.ru',
+            'password' => 12345678,
+        ]);
+
+        $user->update([
+            'name' => 'egorUpdate12',
+            'email' => 'egorUpdate12@email.ru',
+            'password' => 'updatedPassword12',
+            'role_id' => Role::query()->where('name', '=', 'admin')->first()->getAttribute('id')
+        ]);
+
+        dd($user->newQuery()->limit(12)->get());
+//        $user = $user->fresh();
+
+//        $users= $user->newQuery()->paginate();
+//
+//        dd($users);
+
+//        $users = User::query()->paginate(
+//            $this->request->input('per_page'),
+//            $this->request->input('page')
+//        );
+
 //        dd($user->delete());
 
 
@@ -31,7 +54,7 @@ class TestController extends Controller
 //
         return response()->json([
             'data' => [
-                $users
+
             ]
         ], 200);
     }

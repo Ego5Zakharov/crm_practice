@@ -52,20 +52,36 @@ class Builder
         );
     }
 
+    // возращает результат текущий класс после выполнения запроса
     public function execute(): static
     {
-        $this->getStatement()->execute();
+        if ($this->getBindParams()) {
+            $this->getStatement()->execute($this->getBindParams());
+        } else {
+            $this->getStatement()->execute();
+        }
+
         return $this;
     }
 
-    public function fetch()
+    // возращает результат query-запроса
+    public function pureExecute(): bool
     {
-        return $this->getStatement()->fetch(PDO::FETCH_ASSOC);
+        if ($this->getBindParams()) {
+            return $this->getStatement()->execute($this->getBindParams());
+        } else {
+            return $this->getStatement()->execute();
+        }
     }
 
-    public function fetchAll(): false|array
+    public function fetch(PDO|int $pdoFetchMode = PDO::FETCH_ASSOC)
     {
-        return $this->getStatement()->fetchAll(PDO::FETCH_ASSOC);
+        return $this->getStatement()->fetch($pdoFetchMode);
+    }
+
+    public function fetchAll(PDO|int $pdoFetchMode = PDO::FETCH_ASSOC): false|array
+    {
+        return $this->getStatement()->fetchAll($pdoFetchMode);
     }
 
 

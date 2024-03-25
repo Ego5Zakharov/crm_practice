@@ -3,7 +3,6 @@
 namespace App\Kernel\Pagination;
 
 use App\Kernel\Collections\Collection;
-use App\Kernel\Config\Config;
 
 class LengthAwarePaginator
 {
@@ -36,7 +35,7 @@ class LengthAwarePaginator
 
         $itemsCount = count($data);
 
-        $totalPages = (int)ceil($itemsCount / $perPage);
+        $totalPages = (int) ceil($itemsCount / $perPage); // Округляем результат вверх
 
         $start = ($page > 1) ? ($page * $perPage) - $perPage : 0;
 
@@ -145,10 +144,11 @@ class LengthAwarePaginator
         $this->items = $items;
     }
 
-    public function setTotalPages(int $totalPages): void
+    public function setTotalPages(float $totalPages): void
     {
-        $this->totalPages = $totalPages;
+        $this->totalPages = round($totalPages);
     }
+
 
     public function setTotal(int $total): void
     {
