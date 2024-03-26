@@ -174,7 +174,7 @@ abstract class Model implements Arrayable
         $this->builder->setQuery("UPDATE {$this->getTable()} SET $placeholders WHERE id = :id");
         $this->builder->prepareQuery();
         $this->builder->setBindParams($data);
-        $this->builder->bindParam(':id',$this->getAttribute('id'));
+        $this->builder->bindParam(':id', $this->getAttribute('id'));
 
         return $this->builder->pureExecute();
     }
@@ -207,7 +207,6 @@ abstract class Model implements Arrayable
     public function limit(int $count = 12): static
     {
         $this->builder->setLimitCount($count);
-
         return $this;
     }
 
@@ -229,11 +228,7 @@ abstract class Model implements Arrayable
     // TODO добавить выборку из аргументов в селекте
     public function select($table): string
     {
-        if (!$this->builder->getLimitCount()) {
-            return "SELECT * FROM {$this->getTable()}";
-        }
-
-        return "SELECT * FROM {$this->getTable()} LIMIT {$this->builder->getLimitCount()}";
+        return "SELECT * FROM {$this->getTable()}";
     }
 
     private function selectWithoutBindings(): string
@@ -304,6 +299,10 @@ abstract class Model implements Arrayable
 
     private function getWithParams(): Collection|array
     {
+        if ($this->builder->getLimitCount()) {
+            $this->builder->concatQuery(" LIMIT {$this->builder->getLimitCount()}");
+        }
+
         $this->builder->prepareQuery();
 
         $fetchData = $this->builder->getStatement()->execute($this->builder->getBindParams())

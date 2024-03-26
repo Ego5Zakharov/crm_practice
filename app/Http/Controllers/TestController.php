@@ -14,21 +14,39 @@ class TestController extends Controller
 
     public function index(): Response
     {
-        $user = User::query()->create([
-            'name' => 'egor',
-            'email' => 'egor@email.ru',
-            'password' => 12345678,
-        ]);
+//        $user = User::query()->create([
+//            'name' => 'egor',
+//            'email' => 'egor@email.ru',
+//            'password' => 12345678,
+//        ]);
+//
+//        $user->update([
+//            'name' => 'egorUpdate12',
+//            'email' => 'egorUpdate12@email.ru',
+//            'password' => 'updatedPassword12',
+//            'role_id' => Role::query()->where('name', '=', 'admin')->first()->getAttribute('id')
+//        ]);
+//
+        $users = User::query()
+            ->limit(12)
+            ->get();
 
-        $user->update([
-            'name' => 'egorUpdate12',
-            'email' => 'egorUpdate12@email.ru',
-            'password' => 'updatedPassword12',
-            'role_id' => Role::query()->where('name', '=', 'admin')->first()->getAttribute('id')
-        ]);
+        $users = $users->map(function ($item) {
+            return [
+                'id' => $item['id'],
+                'email' => $item['email']
+            ];
+        }, $users);
 
-        dd($user->newQuery()->limit(12)->get());
-//        $user = $user->fresh();
+        dd($users);
+//        $users = collect()->map(function ($item = 2, $key = 1) {
+//            return 1 * 2;
+//        }, $users);
+
+//        dd($users);
+
+
+        //        $user = $user->fresh();
 
 //        $users= $user->newQuery()->paginate();
 //
@@ -63,5 +81,10 @@ class TestController extends Controller
     public function store()
     {
 
+    }
+
+    public function zero($num, $num2)
+    {
+        return 123;
     }
 }

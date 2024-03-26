@@ -12,9 +12,9 @@ class User extends Model
 
     protected bool $guard = true;
 
-    protected array $with = [
-        'role'
-    ];
+//    protected array $with = [
+//        'role'
+//    ];
 
     protected array $fillable = [
         'id',

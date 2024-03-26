@@ -41,7 +41,7 @@ if (!function_exists('app_url')) {
 }
 
 if (!function_exists('collect')) {
-    function collect(array $array): Collection
+    function collect(array $array = []): Collection
     {
         return new Collection($array);
     }
