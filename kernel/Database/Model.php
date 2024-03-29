@@ -476,11 +476,6 @@ abstract class Model implements Arrayable
         return collect($this->attributes);
     }
 
-    public function mergeData(): ?array
-    {
-        return array_merge($this->getAttributes(), $this->getRelations());
-    }
-
     // удаляет все индексы которые имеею структуру не
     //    [
     //      'relation'=>['relationData']

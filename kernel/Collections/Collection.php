@@ -4,6 +4,7 @@ namespace App\Kernel\Collections;
 
 use App\Kernel\Database\Model;
 use App\Kernel\Database\Support\Arrayable;
+use InvalidArgumentException;
 
 class Collection implements Arrayable
 {
@@ -50,13 +51,38 @@ class Collection implements Arrayable
         if ($data instanceof Collection) {
             $data = $data->toArray();
         }
+    }
 
+    public function where(string $param, string $operator, mixed $value): Collection
+    {
+        $updatedArray = [];
+        foreach ($this->items as $key => $item) {
 
+            switch ($operator) {
+                case '=':
+                    if ($this->items[$key][$param] && $this->items[$key][$param] === $value) {
+                        $updatedArray[] = $this->items[$key];
+                    }
+                    break;
+                default:
+                    throw new InvalidArgumentException("Unsupported operator: $operator");
+            }
+
+        }
+        $this->items = $updatedArray;
+
+        return $this;
 
     }
 
-    public function toArray(): array
+    public
+    function toArray(): array
     {
         return $this->items;
+    }
+
+    public function setItems(array $items): void
+    {
+        $this->items = $items;
     }
 }

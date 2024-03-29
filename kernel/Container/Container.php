@@ -40,7 +40,6 @@ class Container
             $this->config->get('database.username'),
             $this->config->get('database.password')
         );
-
         // получать все возможные модели в папке models
 
 

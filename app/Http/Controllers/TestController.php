@@ -14,11 +14,17 @@ class TestController extends Controller
 
     public function index(): Response
     {
-//        $user = User::query()->create([
-//            'name' => 'egor',
-//            'email' => 'egor@email.ru',
-//            'password' => 12345678,
-//        ]);
+        $user = User::query()->create([
+            'name' => 'egor',
+            'email' => 'egor@email.ru',
+            'password' => 12345678,
+        ]);
+
+        $users = $user->newQuery()->get();
+
+        dd($users->where('id', '=', 1));
+
+
 //
 //        $user->update([
 //            'name' => 'egorUpdate12',
@@ -27,18 +33,20 @@ class TestController extends Controller
 //            'role_id' => Role::query()->where('name', '=', 'admin')->first()->getAttribute('id')
 //        ]);
 //
-        $users = User::query()
-            ->limit(12)
-            ->get();
+//        dd(123);
 
-        $users = $users->map(function ($item) {
-            return [
-                'id' => $item['id'],
-                'email' => $item['email']
-            ];
-        }, $users);
-
-        dd($users);
+//        $users = User::query()
+//            ->limit(12)
+//            ->get();
+//
+//        $users = $users->map(function ($item) {
+//            return [
+//                'id' => $item['id'],
+//                'email' => $item['email']
+//            ];
+//        }, $users);
+//
+//        dd($users);
 //        $users = collect()->map(function ($item = 2, $key = 1) {
 //            return 1 * 2;
 //        }, $users);
@@ -81,10 +89,5 @@ class TestController extends Controller
     public function store()
     {
 
-    }
-
-    public function zero($num, $num2)
-    {
-        return 123;
     }
 }

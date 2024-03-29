@@ -18,6 +18,7 @@ class Database
         string $password = 'root')
     {
         $this->connect($host, $dbname, $port, $username, $password);
+
     }
 
     private function connect(
