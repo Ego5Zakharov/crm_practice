@@ -141,15 +141,19 @@ abstract class Model implements Arrayable
 
         $this->builder->getStatement()->bindParam(':id', $param);
 
-        $original = $this->builder->getStatement()->execute()
+        $fetchData = $this->builder->getStatement()->execute()
             ? $this->builder->getStatement()->fetch(PDO::FETCH_ASSOC)
             : null;
 
-        if (!$original) {
+        if (!$fetchData) {
             return null;
         }
 
-        return new static($original);
+        $model = new $this($fetchData);
+        $model->with($this->getWithRelations());
+        $model->unsetWithRelationsKeys();
+
+        return $model;
     }
 
     public function update(array $data = []): bool
@@ -437,13 +441,16 @@ abstract class Model implements Arrayable
         return $this;
     }
 
-    public function with(array $relations = []): void
+    public function with(array $relations = []): Model
     {
         foreach ($relations as $index => $relation) {
-            if (method_exists($this, $relation)) {
+            if ($relation && is_string($relation) && method_exists($this, $relation)) {
                 $this->setWithRelation($relation, $this->$relation);
+            } else if ($relation instanceof Model) {
+                $this->setWithRelation($index, $relation);
             }
         }
+        return $this;
     }
 
     public static function query(): static
@@ -468,12 +475,12 @@ abstract class Model implements Arrayable
 
     public function getWithRelation(string $key)
     {
-        return $this->with[$key];
+        return $this->with[$key] ?? null;
     }
 
     public function collect(): Collection
     {
-        return collect($this->attributes);
+        return collect([$this]);
     }
 
     // удаляет все индексы которые имеею структуру не

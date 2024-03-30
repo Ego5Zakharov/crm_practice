@@ -12,9 +12,9 @@ class User extends Model
 
     protected bool $guard = true;
 
-//    protected array $with = [
-//        'role'
-//    ];
+    protected array $with = [
+        'role'
+    ];
 
     protected array $fillable = [
         'id',
@@ -27,13 +27,13 @@ class User extends Model
         return $this->hasOne(Role::class, 'role_id', 'id');
     }
 
-    public function roles(): ?array
-    {
-        return $this->belongsToMany(
-            Role::class,
-            'user_role',
-            'user_id',
-            'role_id',
-        );
-    }
+//    public function roles(): ?array
+//    {
+//        return $this->belongsToMany(
+//            Role::class,
+//            'user_role',
+//            'user_id',
+//            'role_id',
+//        );
+//    }
 }

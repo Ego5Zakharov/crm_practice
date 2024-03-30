@@ -41,8 +41,12 @@ if (!function_exists('app_url')) {
 }
 
 if (!function_exists('collect')) {
-    function collect(array $array = []): Collection
+    function collect(mixed $array = []): Collection
     {
+        if (!is_array($array)) {
+            $array = [$array];
+        }
+
         return new Collection($array);
     }
 }

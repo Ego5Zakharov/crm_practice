@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\UserResource;
+use App\Kernel\Collections\Collection;
 use App\Kernel\Controller\Controller;
+use App\Kernel\Database\Model;
 use App\Kernel\Database\Query\Exceptions\WhereOperatorNotFoundException;
 use App\Kernel\Json\Response;
 use App\Models\Role;
@@ -12,17 +15,18 @@ use Dotenv\Dotenv;
 class TestController extends Controller
 {
 
-    public function index(): Response
+    public function index()
     {
-        $user = User::query()->create([
-            'name' => 'egor',
-            'email' => 'egor@email.ru',
-            'password' => 12345678,
-        ]);
+//        $user = User::query()->create([
+//            'name' => 'egor',
+//            'email' => 'egor@email.ru',
+//            'password' => 12345678,
+//        ]);
+//
+//        $users = $user->newQuery()->get();
+//        dump($users);
 
-        $users = $user->newQuery()->get();
-
-        dd($users->where('id', '=', 1));
+//        dd($users);
 
 
 //
@@ -78,11 +82,27 @@ class TestController extends Controller
 //            $this->request->input('page')
 //        );
 //
-        return response()->json([
-            'data' => [
+//        return response()->json([
+//            'data' => [
+//
+//            ]
+//        ], 200);
 
-            ]
-        ], 200);
+//        dd(Role::query()->get());
+
+        $role = Role::query()->create([
+            'name' => 'egorAdmin'
+        ]);
+
+        $user = User::query()->create([
+            'name' => 'egor',
+            'email' => 'egor@email.ru',
+            'password' => 12345678,
+            'role_id' => $role->getAttribute('id')
+        ])->fresh();
+
+//        return UserResource::collection($users);
+        return UserResource::make($user);
     }
 
 
