@@ -20,10 +20,10 @@ class Collection implements Arrayable
     public function __get(string $key)
     {
         foreach ($this->items as $index => $value) {
-            if (array_key_exists($key, $value)) {
-                return $value[$key];
-            } else if (array_key_exists($key, $value['relations'])) {
-                return $value['relations'][$key];
+            if (array_key_exists($key, $this->items)) {
+                return $this->items[$key];
+            } else if (array_key_exists($key, $this->items['relations'])) {
+                return $this->items['relations'][$key];
             }
         }
 

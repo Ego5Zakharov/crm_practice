@@ -10,7 +10,6 @@ class UserResource extends Resource
 {
     public function toArray(): array
     {
-        dump($this->resource);
         return [
             'id' => $this->resource->id,
             'name' => $this->resource->name,

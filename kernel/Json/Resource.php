@@ -2,10 +2,8 @@
 
 namespace App\Kernel\Json;
 
-use App\Http\Resources\UserResource;
 use App\Kernel\Collections\Collection;
 use App\Kernel\Database\Model;
-use App\Kernel\Request\Request;
 
 class Resource
 {
@@ -15,7 +13,7 @@ class Resource
     public array $headers = [];
     public int $status = 200;
 
-    public static function collection(Collection|Model $models)
+    public static function collection(Collection|Model $models): AnonymousJsonCollection
     {
         $classPath = static::class;
 
@@ -30,7 +28,11 @@ class Resource
             $resourceItems[$index] = $resource->toArray();
         }
 
-        dd($resourceItems);
+        $resource->setApplicationJsonHeader();
+
+        echo json_encode($resourceItems);
+
+        return new AnonymousJsonCollection($resourceItems);
     }
 
 
