@@ -2,15 +2,54 @@
 
 namespace App\Kernel\Json;
 
+use App\Http\Resources\UserResource;
 use App\Kernel\Collections\Collection;
+use App\Kernel\Database\Model;
+use App\Kernel\Request\Request;
 
-abstract class Resource
+class Resource
 {
-    protected Collection|array $data = [];
+    public Collection|array $items = [];
+    public mixed $resource;
+    public array $with = [];
+    public array $headers = [];
+    public int $status = 200;
 
-    protected array $headers = [];
+    public static function collection(Collection|Model $models)
+    {
+        $classPath = static::class;
 
-    protected int $status = 200;
+        $resource = new $classPath();
+
+        $resourceItems = [];
+
+        foreach ($models->toArray() as $index => $model) {
+
+            $resource->resource = collect($model);
+
+            $resourceItems[$index] = $resource->toArray();
+        }
+
+        dd($resourceItems);
+    }
+
+
+    public static function make(Model $model): Resource|array|null
+    {
+        $classPath = static::class;
+
+        $resource = new $classPath();
+
+        $resource->resource = $model;
+
+        $resource->setApplicationJsonHeader();
+
+        $result = $resource->toArray();
+
+        echo json_encode($result);
+
+        return $resource;
+    }
 
     public function setHeaders(array $headers): void
     {
@@ -25,4 +64,11 @@ abstract class Resource
     {
         $this->setHeaders(array_merge($this->headers, ['Content-type: application/json']));
     }
+
+    // переопределенный метод
+    public function toArray(): array
+    {
+        return [];
+    }
+
 }

@@ -90,19 +90,22 @@ class TestController extends Controller
 
 //        dd(Role::query()->get());
 
-        $role = Role::query()->create([
-            'name' => 'egorAdmin'
-        ]);
+//        $role = Role::query()->create([
+//            'name' => 'egorAdmin'
+//        ]);
+//
+//        $user = User::query()->create([
+//            'name' => 'egor',
+//            'email' => 'egor@email.ru',
+//            'password' => 12345678,
+//            'role_id' => $role->getAttribute('id')
+//        ])->fresh();
 
-        $user = User::query()->create([
-            'name' => 'egor',
-            'email' => 'egor@email.ru',
-            'password' => 12345678,
-            'role_id' => $role->getAttribute('id')
-        ])->fresh();
+        $users = User::query()->limit()->where('role_id', '!=', null)->get();
 
 //        return UserResource::collection($users);
-        return UserResource::make($user);
+
+        return UserResource::collection($users);
     }
 
 

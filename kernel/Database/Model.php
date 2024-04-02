@@ -150,7 +150,9 @@ abstract class Model implements Arrayable
         }
 
         $model = new $this($fetchData);
+
         $model->with($this->getWithRelations());
+
         $model->unsetWithRelationsKeys();
 
         return $model;
@@ -431,6 +433,10 @@ abstract class Model implements Arrayable
                 $this->builder->concatQuery(" AND $key $operator $paramName");
             } else {
                 $this->builder->setQuery("{$this->select($this->table)} WHERE $key $operator $paramName");
+            }
+
+            if ($value === null) {
+                $value = 'NULL';
             }
 
             $this->builder->bindParam($paramName, $value);

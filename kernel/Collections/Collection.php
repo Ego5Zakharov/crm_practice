@@ -17,6 +17,19 @@ class Collection implements Arrayable
 
     protected int $whereCounter = 0;
 
+    public function __get(string $key)
+    {
+        foreach ($this->items as $index => $value) {
+            if (array_key_exists($key, $value)) {
+                return $value[$key];
+            } else if (array_key_exists($key, $value['relations'])) {
+                return $value['relations'][$key];
+            }
+        }
+
+        return null;
+    }
+
     public function __construct(array $items = [])
     {
         $index = 0;
@@ -28,7 +41,7 @@ class Collection implements Arrayable
                     $this->items[$key]['relations'] = $item->getWithRelations();
                 }
             } else {
-                $this->items[$index] = $item;
+                $this->items[$key] = $item;
             }
             $index++;
         }
@@ -212,7 +225,7 @@ class Collection implements Arrayable
     public function toArray(): array
     {
         if ($this->getWhereCounter()) {
-           $this->toArrayWithOperators();
+            $this->toArrayWithOperators();
         }
 
         return $this->items;
