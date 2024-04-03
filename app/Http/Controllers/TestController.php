@@ -7,6 +7,7 @@ use App\Kernel\Collections\Collection;
 use App\Kernel\Controller\Controller;
 use App\Kernel\Database\Model;
 use App\Kernel\Database\Query\Exceptions\WhereOperatorNotFoundException;
+use App\Kernel\Json\AnonymousJsonCollection;
 use App\Kernel\Json\Response;
 use App\Models\Role;
 use App\Models\User;
@@ -101,7 +102,7 @@ class TestController extends Controller
 //            'role_id' => $role->getAttribute('id')
 //        ])->fresh();
 
-        $users = User::query()->limit()->where('role_id', '!=', null)->get();
+        $users = User::query()->limit()->where('role_id', '!=', null)->first();
 
 //        return UserResource::collection($users);
 

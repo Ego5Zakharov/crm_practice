@@ -10,12 +10,12 @@ class Collection implements Arrayable
 {
     protected array $items = [];
 
-    protected array $orWhereDataItems = [];
-    protected array $operators = [
-        'WHERE' => []
-    ];
+//    protected array $orWhereDataItems = [];
+//    protected array $operators = [
+//        'WHERE' => []
+//    ];
 
-    protected int $whereCounter = 0;
+//    protected int $whereCounter = 0;
 
     public function __get(string $key)
     {
