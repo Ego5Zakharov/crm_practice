@@ -13,7 +13,7 @@ class Resource
     public array $headers = [];
     public int $status = 200;
 
-    public static function collection(Collection|Model $models): AnonymousJsonCollection
+    public static function collection(Collection $models): AnonymousJsonCollection
     {
         $classPath = static::class;
 

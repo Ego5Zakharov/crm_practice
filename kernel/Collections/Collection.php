@@ -10,19 +10,19 @@ class Collection implements Arrayable
 {
     protected array $items = [];
 
-//    protected array $orWhereDataItems = [];
-//    protected array $operators = [
-//        'WHERE' => []
-//    ];
+    protected array $orWhereDataItems = [];
+    protected array $operators = [
+        'WHERE' => []
+    ];
 
-//    protected int $whereCounter = 0;
+    protected int $whereCounter = 0;
 
     public function __get(string $key)
     {
         foreach ($this->items as $index => $value) {
             if (array_key_exists($key, $this->items)) {
                 return $this->items[$key];
-            } else if (array_key_exists($key, $this->items['relations'])) {
+            } else if ($this->items['relations'][$key]) {
                 return $this->items['relations'][$key];
             }
         }
@@ -33,10 +33,10 @@ class Collection implements Arrayable
     public function __construct(array $items = [])
     {
         $index = 0;
-
         foreach ($items as $key => $item) {
             if ($item instanceof Model) {
                 $this->items[$key] = $item->getAttributes();
+
                 if (!empty($item->getWithRelations())) {
                     $this->items[$key]['relations'] = $item->getWithRelations();
                 }

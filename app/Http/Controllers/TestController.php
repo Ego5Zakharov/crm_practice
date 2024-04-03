@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\UserResource;
+use App\Kernel\Auth\Auth;
 use App\Kernel\Collections\Collection;
 use App\Kernel\Controller\Controller;
 use App\Kernel\Database\Model;
@@ -102,11 +103,18 @@ class TestController extends Controller
 //            'role_id' => $role->getAttribute('id')
 //        ])->fresh();
 
-        $users = User::query()->limit()->where('role_id', '!=', null)->first();
+//        $users = User::query()->limit()->where('role_id', '!=', null)->get();
 
 //        return UserResource::collection($users);
 
-        return UserResource::collection($users);
+        $password = "qwerty123";
+
+        $hashPassword = Auth::hashPassword($password);
+
+        $passwordVerifyResult = Auth::verifyPassword($password, $hashPassword);
+
+        dd($passwordVerifyResult);
+//        return UserResource::collection($users);
     }
 
 
