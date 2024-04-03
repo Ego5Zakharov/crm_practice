@@ -1,11 +1,11 @@
 <?php
 
 // helpers
-
 use App\Kernel\Collections\Collection;
 use App\Kernel\Config\Config;
 use App\Kernel\Json\Response;
 use App\Kernel\Request\Request;
+use App\Kernel\View\ViewNotFoundException;
 use Dotenv\Dotenv;
 
 if (!function_exists('base_path')) {
@@ -73,5 +73,17 @@ if (!function_exists('request')) {
     function request(): Request
     {
         return Request::initialization();
+    }
+}
+
+if (!function_exists('view')) {
+    /**
+     * @throws ViewNotFoundException
+     */
+    function view(string $filePath, array $data = [])
+    {
+        $view = new App\Kernel\View\View();
+
+        return $view->view($filePath, $data);
     }
 }

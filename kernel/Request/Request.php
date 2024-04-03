@@ -89,8 +89,8 @@ class Request
     public function input(string $argument, ?string $default = null)
     {
         return $this->get[$argument]
-            ?? $this->params()[$argument]
             ?? $this->post[$argument]
+            ?? $this->params()[$argument]
             ?? $default;
     }
 }

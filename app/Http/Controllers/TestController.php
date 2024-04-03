@@ -113,6 +113,11 @@ class TestController extends Controller
 
         $passwordVerifyResult = Auth::verifyPassword($password, $hashPassword);
 
+        // отправлять запрос
+        // отправлять логин пароль
+        // находить человека по этому логину
+        // если человек найден тогда брать его зашифрованный пароль и входить в аккаунт
+
         dd($passwordVerifyResult);
 //        return UserResource::collection($users);
     }

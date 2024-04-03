@@ -7,6 +7,7 @@ use App\Kernel\Database\Database;
 use App\Kernel\Request\Request;
 use App\Kernel\Session\Session;
 use App\Kernel\View\View;
+use App\Kernel\View\ViewNotFoundException;
 
 abstract class Controller
 {
@@ -23,4 +24,16 @@ abstract class Controller
         $this->database = $database;
     }
 
+    /**
+     * @throws ViewNotFoundException
+     */
+    public function view(string $filePath, mixed $data = [])
+    {
+        return $this->view->view($filePath, $data);
+    }
+
+    public function request(): Request
+    {
+        return $this->request;
+    }
 }

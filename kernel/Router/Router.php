@@ -30,7 +30,6 @@ class Router
     {
         $routeFiles = scandir(base_path() . '/routes');
         $routes = [];
-
         foreach ($routeFiles as $index => $file) {
             if ($file !== "."
                 && $file !== ".."
@@ -39,6 +38,22 @@ class Router
                 $routes[] = require_once base_path() . "/routes/" . $file;
             }
         }
+
+        $additionallyRoutes = [];
+
+        foreach ($routes as $index => $route) {
+            if (is_array($route)) {
+                foreach ($route as $iterator => $value) {
+                    if ($value instanceof Route) {
+                        $additionallyRoutes[] = $value;
+                    }
+                }
+            }
+        }
+
+        $additionallyRoutes = [$additionallyRoutes];
+
+        $routes[] = $additionallyRoutes;
 
         return call_user_func_array('array_merge', $routes);
     }

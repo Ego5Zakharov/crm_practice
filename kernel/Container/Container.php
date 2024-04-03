@@ -2,6 +2,7 @@
 
 namespace App\Kernel\Container;
 
+use App\Kernel\Auth\Auth;
 use App\Kernel\Config\Config;
 use App\Kernel\Database\Database;
 use App\Kernel\Request\Request;
@@ -18,6 +19,8 @@ class Container
     public View $view;
     public Session $session;
 
+    public Auth $auth;
+
     public function __construct()
     {
         $this->initialize();
@@ -33,6 +36,8 @@ class Container
 
         $this->session = new Session();
 
+        $this->auth = Auth::initialization($this->session);
+
         $this->database = new Database(
             $this->config->get('database.host'),
             $this->config->get('database.dbname'),
@@ -40,8 +45,6 @@ class Container
             $this->config->get('database.username'),
             $this->config->get('database.password')
         );
-        // получать все возможные модели в папке models
-
 
         $this->router = new Router(
             $this->request,
@@ -49,7 +52,6 @@ class Container
             $this->session,
             $this->database
         );
-
-
     }
+
 }
