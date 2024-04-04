@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Kernel\Auth\HasApiTokens;
 use App\Kernel\Database\Model;
 
 class User extends Model
 {
+    use HasApiTokens;
+
     protected string $primaryKey = "id";
 
     protected string $table = 'users';

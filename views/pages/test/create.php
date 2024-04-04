@@ -1,4 +1,4 @@
-<form action="<?= app_url() . "/api/post" ?>" method="POST">
+<form action="<?= app_url() . "/API/post" ?>" method="POST">
     <div>
         <input type="text" name="name">
     </div>

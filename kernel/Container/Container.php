@@ -3,6 +3,7 @@
 namespace App\Kernel\Container;
 
 use App\Kernel\Auth\Auth;
+use App\Kernel\Auth\JwtService;
 use App\Kernel\Config\Config;
 use App\Kernel\Database\Database;
 use App\Kernel\Request\Request;
@@ -52,6 +53,8 @@ class Container
             $this->session,
             $this->database
         );
+
+        JwtService::generateSecretKey();
     }
 
 }

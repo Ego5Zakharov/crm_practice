@@ -43,7 +43,7 @@ class Request
     {
         $url = $this->query();
 
-        $parsedUrl = parse_url($url)['path'];
+        $parsedUrl = $url ? parse_url($url)['path'] : null;
 
         $queryParams = [];
 

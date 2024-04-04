@@ -7,6 +7,7 @@ use App\Kernel\Request\Request;
 use App\Kernel\Route\Route;
 use App\Kernel\Session\Session;
 use App\Kernel\View\View;
+use Decimal\Decimal;
 use JetBrains\PhpStorm\NoReturn;
 
 class Router
@@ -118,6 +119,8 @@ class Router
 
     public function findRoute(string $uri, string $method)
     {
+//        dump($uri,$method);
+//        dd($this->routes);
         if (!isset($this->routes[$method][$uri])) {
             $this->notFound();
         }
