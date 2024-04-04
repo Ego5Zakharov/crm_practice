@@ -8,7 +8,10 @@ use App\Models\User;
 
 class ApiAuthMiddleware extends Middleware
 {
-    public function handle(): bool
+    /**
+     * @return true|void
+     */
+    public function handle()
     {
         $request = request();
 
@@ -18,14 +21,16 @@ class ApiAuthMiddleware extends Middleware
 
                 $token = Token::query()->where('access_token', '=', $bearerToken)->first();
 
+                if ($token && $token->getAttribute('expires_at') <= time()) {
+                    $this->httpError(401, ['message' => 'Token is expire']);
+                }
+
                 if ($token) {
                     Auth::setUser($token->user());
-
                     return true;
                 }
             }
         }
-
-        return false;
+        $this->httpError(401, ['message' => 'Unauthorized']);
     }
 }

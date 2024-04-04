@@ -26,13 +26,13 @@ trait HasApiTokens
             return null;
         }
 
-        $this->accessToken = JwtService::createToken($user, date('y-m-d'), date('y-m-d'));
+        $this->accessToken = JwtService::createToken($user, time(), time() + 10);
 
         $token = Token::query()->create([
             'name' => 'API',
             'access_token' => $this->accessToken,
-            'signature' => JwtService::getSignature(),
             'user_id' => $user->getAttribute('id'),
+            'expires_at' => time() + config('jwt.expires_at')
         ]);
 
         return (bool)$token;

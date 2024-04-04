@@ -14,6 +14,7 @@ class AdminController extends Controller
 {
     public function index(): AnonymousJsonCollection
     {
+
         return UserResource::collection(
             User::query()->get()
         );

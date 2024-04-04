@@ -31,11 +31,11 @@ class LoginController extends Controller
                     'access_token' => $token['access_token'],
                     'expires_at' => $token['expires_at']
                 ],
-            ]);
-
+            ], 200);
         }
+
         return response()->json([
             'message' => 'Auth error!'
-        ]);
+        ], 401);
     }
 }
