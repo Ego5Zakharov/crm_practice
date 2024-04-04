@@ -57,6 +57,7 @@ abstract class Model implements Arrayable
         // подгружаем связи
         if (method_exists($this, $value)) {
             $this->relations[$value] = $this->$value();
+
             return $this->relations[$value];
         }
 
@@ -374,6 +375,23 @@ abstract class Model implements Arrayable
         }
 
         return $this->firstWithoutBindings();
+    }
+
+    public function last(string $param = "id"): ?Model
+    {
+        $this->builder->setQuery($this->select($this->getTable()) . " ORDER BY $param DESC");
+
+        $this->builder->prepareQuery();
+
+        $fetchData = $this->builder->execute()->fetch();
+
+        if (!$fetchData) {
+            return null;
+        }
+
+        $newModelPath = static::class;
+
+        return new $newModelPath($fetchData);
     }
 
     private function firstWithParams(): null|static

@@ -2,6 +2,7 @@
 
 namespace App\Kernel\Database\Concerns;
 
+use App\Kernel\Database\Model;
 use PDO;
 
 trait HasRelationships
@@ -43,6 +44,32 @@ trait HasRelationships
             return null;
         }
         return new $relatedModel($model);
+    }
+
+    public function belongsTo(string $relatedModelPath, string $foreignId, string $localId)
+    {
+        // возвращает запись на ссылающуюся таблицу
+
+        $model = new $relatedModelPath();
+
+        $foreignIdValue = $this->$foreignId;
+
+        if (!$foreignIdValue) {
+            return null;
+        }
+
+        $this->builder->setQuery("SELECT * FROM {$model->getTable()} WHERE $localId = :$foreignId");
+
+        $this->builder->prepareQuery();
+
+        $this->builder->bindParam($foreignId, $foreignIdValue);
+
+        $fetchResult = $this->builder->execute()->fetch();
+
+        if (!$fetchResult) {
+            return null;
+        }
+        return new $relatedModelPath($fetchResult);
     }
 
     public function hasMany(
@@ -136,27 +163,32 @@ trait HasRelationships
         return $relatedModels;
     }
 
-    public function setWithRelation(string $key, mixed $value): void
+    public
+    function setWithRelation(string $key, mixed $value): void
     {
         $this->with[$key] = $value;
     }
 
-    public function getRelations(): array
+    public
+    function getRelations(): array
     {
         return $this->relations;
     }
 
-    public function getRelation(string $key)
+    public
+    function getRelation(string $key)
     {
         return $this->relations[$key];
     }
 
-    public function setRelation(string $key, mixed $value): void
+    public
+    function setRelation(string $key, mixed $value): void
     {
         $this->relations[$key] = $value;
     }
 
-    public function setRelations(array $relations = []): void
+    public
+    function setRelations(array $relations = []): void
     {
         $this->relations = $relations;
     }

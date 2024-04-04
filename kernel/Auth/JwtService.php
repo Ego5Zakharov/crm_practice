@@ -9,9 +9,10 @@ class JwtService
 {
     private static ?string $secretKey = null;
     private static string $token;
+    private static string $signature;
 
     /**
-     * @param array $payload - данные в токене
+     * @param Model $model
      * @param mixed $start_at - время начала действия токена
      * @param mixed $expires_st - время конца действия токена
      * @return string
@@ -38,6 +39,8 @@ class JwtService
         $signature = hash_hmac('sha256', $base64UrlHeader . "." . $base64Payload, self::$secretKey, true);
 
         $base64Signature = self::strEncode($signature);
+
+        self::$signature = $base64Signature;
 
         self::$token = $base64UrlHeader . "." . $base64Payload . "." . $base64Signature;
 
@@ -84,6 +87,11 @@ class JwtService
     public static function getSecretKey(): string
     {
         return self::$secretKey;
+    }
+
+    public static function getSignature(): ?string
+    {
+        return self::$signature ?? null;
     }
 
     public static function getToken(): ?string

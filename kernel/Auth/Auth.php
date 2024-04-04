@@ -10,6 +10,7 @@ class Auth
 {
     protected static ?Auth $instance = null;
     protected static Session $session;
+
     protected mixed $user;
     private array $algorithms = [
         'BCRYPT' => '2y',
@@ -74,12 +75,30 @@ class Auth
         return false;
     }
 
-    // проверяет авторизован ли пользователь
+    public static function attemptAPI(string $email, string $password): false|User|array
+    {
+        $user = User::query()->where('email', '=', $email)->first();
+
+        if (!$user) {
+            return false;
+        }
+
+        $isVerified = self::verifyPassword($password, $user->getAttribute('password'));
+
+        if ($isVerified) {
+            self::$instance->user = $user;
+        }
+
+        return ($isVerified) ? $user : false;
+    }
+
+    // проверяет авторизован ли пользователь в сессии
     public static function isAuth(): null|bool|string
     {
         return self::$session->get('is_auth');
     }
 
+    // выход из сессии
     public static function logout(): void
     {
         self::$instance::$session->unset('is_auth');
@@ -88,5 +107,10 @@ class Auth
     public static function user()
     {
         return self::$instance->user;
+    }
+
+    public static function setUser(User $user): void
+    {
+        self::$instance->user = $user;
     }
 }

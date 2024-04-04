@@ -53,9 +53,11 @@ class Route
     public static function get(
         string $uri,
         mixed  $action,
+        array  $middlewares = []
     ): Route
     {
-        $route = new Route('GET', self::$prefix . $uri, $action, []);
+        $route = new Route('GET', self::$prefix . $uri, $action, $middlewares);
+
         self::$routes[] = $route;
 
         return $route;
@@ -64,9 +66,11 @@ class Route
     public static function post(
         string $uri,
         mixed  $action,
+        array  $middlewares = []
     ): Route
     {
-        $route = new Route('POST', self::$prefix . $uri, $action, []);
+        $route = new Route('POST', self::$prefix . $uri, $action, $middlewares);
+
         self::$routes[] = $route;
 
         return $route;

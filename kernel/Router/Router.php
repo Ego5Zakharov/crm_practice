@@ -7,8 +7,9 @@ use App\Kernel\Request\Request;
 use App\Kernel\Route\Route;
 use App\Kernel\Session\Session;
 use App\Kernel\View\View;
-use Decimal\Decimal;
+use Closure;
 use JetBrains\PhpStorm\NoReturn;
+use Symfony\Component\VarDumper\Dumper\DataDumperInterface;
 
 class Router
 {
@@ -87,18 +88,31 @@ class Router
 
         foreach ($routeList as $routeListIndex => $routeValue) {
             foreach ($routeValue as $route) {
-                $this->routes[$route->getMethod()][$route->getUri()] = $route->getAction();
+                $this->routes[$route->getMethod()][$route->getUri()] = [$route->getAction(), $route->getMiddlewares()];
+//                if($route instanceof Closure){
+//                    dd(123);
+//                }
+//                $this->routes[$route->getMethod()][$route->getUri()][2] = $route->getMiddlewares();
             }
         }
     }
 
     public function dispatch(string $uri, string $method): void
     {
-
         $route = $this->findRoute($uri, $method);
+
         if (is_array($route)) {
-            $uri = $route[0];
-            $action = $route[1];
+            $uri = $route[0][0];
+
+            $action = $route[0][1];
+
+            $middlewares = $route[1];
+
+            // применяем middlewares
+            foreach ($middlewares as $middleware) {
+                $middleware = new $middleware();
+                $middleware->handle();
+            }
 
             // dependency injection
             $class = new $uri(

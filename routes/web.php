@@ -29,7 +29,7 @@ return [
 
         JwtService::generateSecretKey();
         $token = JwtService::createToken($payload, time(), time() + (60 * 60));
-
+        
         dd(JwtService::encodeToken($token));
 
 //        return view('users/dashboard');
