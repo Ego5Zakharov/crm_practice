@@ -33,9 +33,14 @@ class AdminController extends Controller
 //        dd($user->with(['role'])->get());
 //        dd(User::query()->with(['role'])->get());
 
+        // тестирование
+        // несколько вариантов ответа
+        // выбираем вопрос, у вопроса может быть ветка
 
         $usersWithRoleId100 = User::query()->whereHas('role', function (Model $model) {
-            return $model->where('id', '=', 100)->where('name','=','user')->first();
+            return $model->where('id', '=', 100)
+                ->where('name','=','user')
+                ->first();
         });
 
         dd($usersWithRoleId100);

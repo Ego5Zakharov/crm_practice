@@ -609,8 +609,8 @@ abstract class Model implements Arrayable
             }
         }
 
-        // переводим снова данные к форме модели
-        $toModel = [];
+        // приводим данные из массива к форме модели
+        $models = [];
 
         foreach ($modelsQueryResult as $model){
             $relations = $model['relations'];
@@ -620,10 +620,10 @@ abstract class Model implements Arrayable
             $clonedModel->setOriginals($model);
             $clonedModel->with($relations);
             $clonedModel->unsetWithRelationsKeys();
-            $toModel[] = $clonedModel;
+            $models[] = $clonedModel;
         }
 
-        return $toModel;
+        return $models;
     }
 
 
