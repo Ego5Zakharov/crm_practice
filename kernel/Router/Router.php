@@ -89,10 +89,6 @@ class Router
         foreach ($routeList as $routeListIndex => $routeValue) {
             foreach ($routeValue as $route) {
                 $this->routes[$route->getMethod()][$route->getUri()] = [$route->getAction(), $route->getMiddlewares()];
-//                if($route instanceof Closure){
-//                    dd(123);
-//                }
-//                $this->routes[$route->getMethod()][$route->getUri()][2] = $route->getMiddlewares();
             }
         }
     }
@@ -114,6 +110,7 @@ class Router
                 $middleware->handle();
             }
 
+
             // dependency injection
             $class = new $uri(
                 $this->request,
@@ -121,9 +118,6 @@ class Router
                 $this->session,
                 $this->database
             );
-
-            // TODO
-            // Add middlewares
 
             call_user_func([$class, $action]);
         } else {

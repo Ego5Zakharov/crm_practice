@@ -17,7 +17,7 @@ return [
             Route::post('/register/', [RegisterController::class, 'register']);
             Route::post('/login/', [LoginController::class, 'login']);
 
-            Route::post('/checkJWT/', [AdminController::class, 'index'])->setMiddlewares([ApiAuthMiddleware::class]);
+            Route::post('/checkJWT/', [AdminController::class, 'index']);
 
             Route::prefix('/users', function () {
                 Route::get('/', [TestController::class, 'index']);

@@ -15,25 +15,23 @@ return [
     Route::post('/login', [LoginController::class, 'login']),
 
 
-    Route::get('/', [TestController::class, 'index']),
+    Route::get('/', [TestController::class, 'testView']),
 
     Route::get('/create', [TestController::class, 'create']),
     Route::post('/post', [TestController::class, 'store']),
 
-    Route::get('/', function () {
 
-        $payload = [
-            'email' => 'egor_email',
-            'password' => '12345678'
-        ];
-
-        JwtService::generateSecretKey();
-        $token = JwtService::createToken($payload, time(), time() + (60 * 60));
-        
-        dd(JwtService::encodeToken($token));
+//        $payload = [
+//            'email' => 'egor_email',
+//            'password' => '12345678'
+//        ];
+//
+//        JwtService::generateSecretKey();
+//        $token = JwtService::createToken($payload, time(), time() + (60 * 60));
+//
+//        dd(JwtService::encodeToken($token));
 
 //        return view('users/dashboard');
-    })
 
 ];
 //return [];

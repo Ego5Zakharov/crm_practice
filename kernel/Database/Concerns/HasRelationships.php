@@ -163,32 +163,27 @@ trait HasRelationships
         return $relatedModels;
     }
 
-    public
-    function setWithRelation(string $key, mixed $value): void
+    public function setWithRelation(string $key, mixed $value): void
     {
         $this->with[$key] = $value;
     }
 
-    public
-    function getRelations(): array
+    public function getRelations(): array
     {
         return $this->relations;
     }
 
-    public
-    function getRelation(string $key)
+    public function getRelation(string $key)
     {
         return $this->relations[$key];
     }
 
-    public
-    function setRelation(string $key, mixed $value): void
+    public function setRelation(string $key, mixed $value): void
     {
         $this->relations[$key] = $value;
     }
 
-    public
-    function setRelations(array $relations = []): void
+    public function setRelations(array $relations = []): void
     {
         $this->relations = $relations;
     }

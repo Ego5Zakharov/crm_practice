@@ -10,12 +10,25 @@ use App\Kernel\Database\Model;
 use App\Kernel\Database\Query\Exceptions\WhereOperatorNotFoundException;
 use App\Kernel\Json\AnonymousJsonCollection;
 use App\Kernel\Json\Response;
+use App\Kernel\View\ViewNotFoundException;
 use App\Models\Role;
 use App\Models\User;
 use Dotenv\Dotenv;
 
 class TestController extends Controller
 {
+    /**
+     * @throws ViewNotFoundException
+     */
+    public function testView()
+    {
+        return $this->view->view('test',
+            [
+                'array' => [
+                    1, 2, 3, 4, 5
+                ]
+            ]);
+    }
 
     public function index()
     {

@@ -9,6 +9,8 @@ use App\Kernel\Database\Query\Builder;
 use App\Kernel\Database\Query\Exceptions\WhereOperatorNotFoundException;
 use App\Kernel\Database\Support\Arrayable;
 use App\Kernel\Pagination\LengthAwarePaginator;
+use App\Models\User;
+use Closure;
 use Dotenv\Dotenv;
 use PDO;
 
@@ -327,6 +329,8 @@ abstract class Model implements Arrayable
 
             $clonedModel->setOriginals($value);
             $clonedModel->setAttributes($value);
+            // передать туда актуальные данные with relations которые приходят через with()
+//            dd(debug_backtrace());
             $clonedModel->with($this->getWithRelations());
             $clonedModel->unsetWithRelationsKeys();
 
@@ -431,9 +435,43 @@ abstract class Model implements Arrayable
 
         $model = new $this($statementResult);
         $model->with($this->getWithRelations());
+
         $model->unsetWithRelationsKeys();
 
         return $model;
+    }
+
+    /**
+     * Если вызывается метод whereHas - where отрабатывает в рамках этих данных
+     */
+    public function whereHasWhere(string $key, mixed $operator, mixed $value)
+    {
+        try {
+            if (!in_array($operator, $this->builder->getWhereOperators())) {
+                throw new WhereOperatorNotFoundException("$operator does not exist.");
+            }
+
+            $this->builder->incrementWhereCallsCount();
+
+            $paramName = ":param" . $this->builder->getWhereCallsCount();
+
+            if (str_contains($this->builder->getQuery(), 'WHERE')) {
+                $this->builder->concatQuery(" AND $key $operator $paramName AND id={$this->getAttribute('id')}");
+            } else {
+                $this->builder->setQuery("{$this->select($this->table)} WHERE $key $operator $paramName AND id={$this->getAttribute('id')}");
+            }
+
+            if ($value === null) {
+                $value = 'NULL';
+            }
+
+            $this->builder->bindParam($paramName, $value);
+
+            return $this;
+        } catch (WhereOperatorNotFoundException $exception) {
+            // TODO Log Exceptions
+        }
+
     }
 
     public function where(string $key, mixed $operator, mixed $value): ?static
@@ -442,6 +480,11 @@ abstract class Model implements Arrayable
             if (!in_array($operator, $this->builder->getWhereOperators())) {
                 throw new WhereOperatorNotFoundException("$operator does not exist.");
             }
+
+            if (debug_backtrace()[2]['function'] === "whereHas") {
+                return $this->whereHasWhere($key, $operator, $value);
+            }
+
 
             $this->builder->incrementWhereCallsCount();
 
@@ -465,53 +508,73 @@ abstract class Model implements Arrayable
         return $this;
     }
 
-    public function with(array $relations = []): Model
+    public
+    function with(array $relations = []): Model
     {
         foreach ($relations as $index => $relation) {
+            /**
+             * User::query()->with($relations)->get()
+             */
+            if ($index && is_string($index) && method_exists($this, $index)) {
+                $this->setWithRelation($index, $this->$index);
+                continue;
+            }
+
+            /**
+             * $user->with($relations)->get();
+             */
             if ($relation && is_string($relation) && method_exists($this, $relation)) {
                 $this->setWithRelation($relation, $this->$relation);
             } else if ($relation instanceof Model) {
                 $this->setWithRelation($index, $relation);
             }
         }
+
         return $this;
     }
 
-    public static function query(): static
+    public
+    static function query(): static
     {
         return self::$instance = new static();
     }
 
-    public function freshQuery(): void
+    public
+    function freshQuery(): void
     {
         $this->builder->setQuery("");
     }
 
-    public function getTable(): string
+    public
+    function getTable(): string
     {
         return $this->table;
     }
 
-    public function getWithRelations(): array
+    public
+    function getWithRelations(): array
     {
         return $this->with;
     }
 
-    public function getWithRelation(string $key)
+    public
+    function getWithRelation(string $key)
     {
         return $this->with[$key] ?? null;
     }
 
-    public function collect(): Collection
+    public
+    function collect(): Collection
     {
         return collect([$this]);
     }
 
-    // удаляет все индексы которые имеею структуру не
-    //    [
-    //      'relation'=>['relationData']
-    //    ]
-    public function unsetWithRelationsKeys(): void
+// удаляет все индексы которые имеею структуру не
+//    [
+//      'relation'=>['relationData']
+//    ]
+    public
+    function unsetWithRelationsKeys(): void
     {
         foreach (array_keys($this->getWithRelations()) as $index) {
             if (is_numeric($index)) {
@@ -520,12 +583,58 @@ abstract class Model implements Arrayable
         }
     }
 
-    public function newQuery(): static
+    public
+    function whereHas(string $relation, Closure $closure)
+    {
+        $models = $this->newQuery()->with([$relation])->get()->toArray();
+
+        // модели с нужной связью
+        $modelsWithRelations = [];
+
+        foreach ($models as $index => $model) {
+            if (isset($model['relations']) && $model['relations'][$relation]) {
+                $modelsWithRelations[] = $model;
+            }
+        }
+
+        // модели прошедшие условия запроса
+        $modelsQueryResult = [];
+
+        foreach ($modelsWithRelations as $index => $modelsWithRelation) {
+            $currentRelation = $modelsWithRelation['relations'][$relation];
+            $result = $closure($currentRelation);
+            // убеждаемся что результат существует
+            if ((bool)$result) {
+                $modelsQueryResult[] = $modelsWithRelation;
+            }
+        }
+
+        // переводим снова данные к форме модели
+        $toModel = [];
+
+        foreach ($modelsQueryResult as $model){
+            $relations = $model['relations'];
+            unset($model['relations']);
+            $clonedModel = clone $this;
+            $clonedModel->setAttributes($model);
+            $clonedModel->setOriginals($model);
+            $clonedModel->with($relations);
+            $clonedModel->unsetWithRelationsKeys();
+            $toModel[] = $clonedModel;
+        }
+
+        return $toModel;
+    }
+
+
+    public
+    function newQuery(): static
     {
         return $this::query();
     }
 
-    public function toArray(): array
+    public
+    function toArray(): array
     {
         return $this->getAttributes();
     }

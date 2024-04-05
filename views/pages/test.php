@@ -1,7 +1,7 @@
 <?php
-$test = ["Ваше значение"]; // Замените это на ваше значение
+$test = ["test value"];
 ?>
-<div><?= $this->component('header', $test) ?></div>
+<div><?= $this->component('header') ?></div>
 
 <div>Content</div>
 
