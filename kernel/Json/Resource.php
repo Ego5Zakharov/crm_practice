@@ -30,13 +30,12 @@ class Resource
 
                 $resourceItems[$index] = $resource->toArray();
             }
-        } else if ($models instanceof LengthAwarePaginator) {
-            foreach ($models->getItems() as $index => $model) {
-                $resource->resource = collect($model);
-                $resourceItems['items'][$index] = $model;
-            }
-            $resourceItems['meta'] = $models->getMeta();
+        } // обработка Collection
+        else foreach ($models->getItems() as $index => $model) {
+            $resource->resource = collect($model);
+            $resourceItems['items'][$index] = $model;
         }
+        $resourceItems['meta'] = $models->getMeta();
 
 
         $resource->setApplicationJsonHeader();
