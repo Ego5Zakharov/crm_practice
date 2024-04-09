@@ -245,8 +245,12 @@ abstract class Model implements Arrayable
         return "SELECT * FROM {$this->getTable()}";
     }
 
-    public function paginate(int $perPage = 12, int $page = 1): array
+    public function paginate(int $perPage = 12, int $page = 1): LengthAwarePaginator|array
     {
+        if ($page < 0) {
+            $page = 1;
+        }
+
         $builder = $this->newBuilder();
 
         $builder->setQuery("SELECT COUNT(*) as total FROM {$this->getTable()}");
@@ -285,9 +289,10 @@ abstract class Model implements Arrayable
         $paginator->setTotal($totalCount);
         $paginator->setTotalPages($totalCount / $perPage);
         $paginator->setCurrentPage($page);
-        $paginator->metaConfiguration($page);
+        $paginator->setPerPage($perPage);
+        $paginator->metaConfiguration();
 
-        return $paginator->getInfo();
+        return $paginator;
     }
 
     private function newBuilder(): Builder
@@ -583,8 +588,7 @@ abstract class Model implements Arrayable
         }
     }
 
-    public
-    function whereHas(string $relation, Closure $closure)
+    public function whereHas(string $relation, Closure $closure): array
     {
         $models = $this->newQuery()->with([$relation])->get()->toArray();
 
@@ -612,7 +616,7 @@ abstract class Model implements Arrayable
         // приводим данные из массива к форме модели
         $models = [];
 
-        foreach ($modelsQueryResult as $model){
+        foreach ($modelsQueryResult as $model) {
             $relations = $model['relations'];
             unset($model['relations']);
             $clonedModel = clone $this;
@@ -627,14 +631,12 @@ abstract class Model implements Arrayable
     }
 
 
-    public
-    function newQuery(): static
+    public function newQuery(): static
     {
         return $this::query();
     }
 
-    public
-    function toArray(): array
+    public function toArray(): array
     {
         return $this->getAttributes();
     }

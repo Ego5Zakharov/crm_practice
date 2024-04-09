@@ -18,16 +18,16 @@ class AdminController extends Controller
     public function index(): AnonymousJsonCollection
     {
 
-        $role = Role::query()->create([
-            'name' => 'user'
-        ]);
-
-        $user = User::query()->create([
-            'name' => 'egor',
-            'email' => 'egor@mail.ru',
-            'password' => Auth::hashPassword(12345678),
-            'role_id' => $role->getAttribute('id')
-        ]);
+//        $role = Role::query()->create([
+//            'name' => 'user'
+//        ]);
+//
+//        $user = User::query()->create([
+//            'name' => 'egor',
+//            'email' => 'egor@mail.ru',
+//            'password' => Auth::hashPassword(12345678),
+//            'role_id' => $role->getAttribute('id')
+//        ]);
 
 
 //        dd($user->with(['role'])->get());
@@ -37,15 +37,18 @@ class AdminController extends Controller
         // несколько вариантов ответа
         // выбираем вопрос, у вопроса может быть ветка
 
-        $usersWithRoleId100 = User::query()->whereHas('role', function (Model $model) {
-            return $model->where('id', '=', 100)
-                ->where('name','=','user')
-                ->first();
-        });
+//        $usersWithRoleId100 = User::query()->whereHas('role', function (Model $model) {
+//            return $model->where('id', '=', 100)
+//                ->where('name','=','user')
+//                ->first();
+//        });
+//
+//        dd($usersWithRoleId100);
 
-        dd($usersWithRoleId100);
-//        return UserResource::collection(
-//            User::query()->with(['users'])->get()
-//        );
+        $users = User::query()->with(['role'])->paginate(12,1);
+        // TODO сделать пагинацию в ресурсах
+        return UserResource::collection(
+            $users
+        );
     }
 }

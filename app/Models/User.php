@@ -13,6 +13,9 @@ class User extends Model
 
     protected string $table = 'users';
 
+//    protected array $with = [
+//        'role'
+//    ];
     protected bool $guard = true;
 
     protected array $fillable = [
@@ -20,7 +23,7 @@ class User extends Model
         'name', 'email', 'password',
         'role_id'
     ];
-    
+
     public function role()
     {
         return $this->hasOne(Role::class, 'role_id', 'id');

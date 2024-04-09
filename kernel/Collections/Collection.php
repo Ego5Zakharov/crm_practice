@@ -22,7 +22,7 @@ class Collection implements Arrayable
         foreach ($this->items as $index => $value) {
             if (array_key_exists($key, $this->items)) {
                 return $this->items[$key];
-            } else if ($this->items['relations'][$key]) {
+            } else if (isset($this->items['relations']) && $this->items['relations'][$key]) {
                 return $this->items['relations'][$key];
             }
         }

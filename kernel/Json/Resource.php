@@ -4,6 +4,7 @@ namespace App\Kernel\Json;
 
 use App\Kernel\Collections\Collection;
 use App\Kernel\Database\Model;
+use App\Kernel\Pagination\LengthAwarePaginator;
 
 class Resource
 {
@@ -13,7 +14,7 @@ class Resource
     public array $headers = [];
     public int $status = 200;
 
-    public static function collection(Collection $models): AnonymousJsonCollection
+    public static function collection(Collection|LengthAwarePaginator $models): AnonymousJsonCollection
     {
         $classPath = static::class;
 
@@ -21,12 +22,22 @@ class Resource
 
         $resourceItems = [];
 
-        foreach ($models->toArray() as $index => $model) {
+        if ($models instanceof Collection) {
 
-            $resource->resource = collect($model);
+            foreach ($models->toArray() as $index => $model) {
 
-            $resourceItems[$index] = $resource->toArray();
+                $resource->resource = collect($model);
+
+                $resourceItems[$index] = $resource->toArray();
+            }
+        } else if ($models instanceof LengthAwarePaginator) {
+            foreach ($models->getItems() as $index => $model) {
+                $resource->resource = collect($model);
+                $resourceItems['items'][$index] = $model;
+            }
+            $resourceItems['meta'] = $models->getMeta();
         }
+
 
         $resource->setApplicationJsonHeader();
 

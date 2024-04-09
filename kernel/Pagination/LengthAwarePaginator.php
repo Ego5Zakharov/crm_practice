@@ -19,6 +19,10 @@ class LengthAwarePaginator
     // ссылка указывающая на следующий элемент
     protected ?string $nextLink = "";
 
+    protected ?int $perPage = 12;
+
+    protected array $meta = [];
+
     /**
      * @param array $data
      * данные
@@ -35,7 +39,7 @@ class LengthAwarePaginator
 
         $itemsCount = count($data);
 
-        $totalPages = (int) ceil($itemsCount / $perPage); // Округляем результат вверх
+        $totalPages = (int)ceil($itemsCount / $perPage); // Округляем результат вверх
 
         $start = ($page > 1) ? ($page * $perPage) - $perPage : 0;
 
@@ -46,20 +50,27 @@ class LengthAwarePaginator
         $this->setCurrentPage($page);
         $this->setTotal($itemsCount);
 
-        // если предыдущего элемента несуществует - null
+        $debugModel = debug_backtrace()[0]['file'];
 
-        $this->metaConfiguration($page);
+        $mPosition = strpos(strrev($debugModel), 'M', 0);
+
+        $model = strrev(substr(strrev($debugModel), 0, $mPosition + 1));
+
+        if ($model !== "Model.php") {
+            $this->metaConfiguration();
+        }
     }
 
-    public function metaConfiguration(int $page): void
+    public function metaConfiguration(): void
     {
         $oldUrl = request()->fullUrl();
 
         $queryParams = [];
 
-        $parseOldUrlQuery = parse_url($oldUrl)['query'];
-
-        parse_str($parseOldUrlQuery, $queryParams);
+        $parseOldUrlQuery = parse_url($oldUrl)['query'] ?? null;
+        if (!is_null($parseOldUrlQuery)) {
+            parse_str($parseOldUrlQuery, $queryParams);
+        }
 
         $newUrl = app_url() . request()->uri();
 
@@ -81,6 +92,7 @@ class LengthAwarePaginator
             }
             $counter++;
         }
+
         foreach ($queryParams as $index => $param) {
 
             if ($index === 'page') {
@@ -95,11 +107,36 @@ class LengthAwarePaginator
             $counter++;
         }
 
-        $prevUrl = $page - 1 <= 0 ? null : $prevUrl;
-        $nextUrl = $page >= $this->getTotalPages() ? null : $nextUrl;
+        // если в query ничего не было передано - заполняем perPage и page сами
+        if (!isset($parseOldUrlQuery)) {
+
+            $prevPage = $this->getTotalPages() - $this->getCurrentPage() < 0
+                ? null
+                : $this->getCurrentPage() - 1;
+
+            $nextPage = $this->getCurrentPage() + 1 > $this->getTotalPages()
+                ? null
+                : $this->getCurrentPage() + 1;
+
+            $prevUrl .= "?per_page={$this->getPerPage()}&page=$prevPage";
+            $nextUrl .= "?per_page={$this->getPerPage()}&page=$nextPage";
+        } else {
+            $prevUrl = $this->getCurrentPage() - 1 <= 0 ? null : $prevUrl;
+            $nextUrl = $this->getCurrentPage() >= $this->getTotalPages() ? null : $nextUrl;
+        }
 
         $this->setPrevLink($prevUrl);
         $this->setNextLink($nextUrl);
+
+        $this->setMeta([
+        'totalPages' => $this->getTotalPages(),
+        'currentPage' => $this->getCurrentPage(),
+        'total' => $this->getTotal(),
+        'meta' => [
+            'prev' => $this->getPrevLink(),
+            'next' => $this->getNextLink()
+        ],
+    ]);
     }
 
     public function getInfo(string $varName = 'pagination', bool $withoutItems = false): array
@@ -178,6 +215,26 @@ class LengthAwarePaginator
     public function setNextLink(?string $nextLink): void
     {
         $this->nextLink = $nextLink;
+    }
+
+    public function getPerPage(): ?int
+    {
+        return $this->perPage;
+    }
+
+    public function setPerPage(?int $perPage): void
+    {
+        $this->perPage = $perPage;
+    }
+
+    public function getMeta(): array
+    {
+        return $this->meta;
+    }
+
+    public function setMeta(array $meta): void
+    {
+        $this->meta = $meta;
     }
 
 }
