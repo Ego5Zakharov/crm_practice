@@ -5,6 +5,7 @@ use App\Http\Controllers\DesignPatterns\ObjectPool\Builder\BuilderController;
 use App\Http\Controllers\DesignPatterns\ObjectPool\FactoryMethod\FactoryMethodController;
 use App\Http\Controllers\DesignPatterns\ObjectPool\ObjectPool\ObjectPoolController;
 use App\Http\Controllers\DesignPatterns\ObjectPool\Strategy\StrategyController;
+use App\Http\Controllers\DesignPatterns\Prototype\PrototypeController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RegisterController;
 use App\Kernel\Auth\Auth;
