@@ -1,5 +1,10 @@
 <?php
 
+use App\Http\Controllers\DesignPatterns\Memento\MementoController;
+use App\Http\Controllers\DesignPatterns\ObjectPool\Builder\BuilderController;
+use App\Http\Controllers\DesignPatterns\ObjectPool\FactoryMethod\FactoryMethodController;
+use App\Http\Controllers\DesignPatterns\ObjectPool\ObjectPool\ObjectPoolController;
+use App\Http\Controllers\DesignPatterns\ObjectPool\Strategy\StrategyController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RegisterController;
 use App\Kernel\Auth\Auth;
@@ -15,11 +20,18 @@ return [
     Route::post('/login', [LoginController::class, 'login']),
 
 
-    Route::get('/', [TestController::class, 'testView']),
+    Route::get('/', [TestController::class, 'testViesw']),
 
     Route::get('/create', [TestController::class, 'create']),
     Route::post('/post', [TestController::class, 'store']),
 
+
+    Route::get('/factoryMethod', [FactoryMethodController::class, 'handle']),
+    Route::get('/strategy', [StrategyController::class, 'handle']),
+    Route::get('/builder', [BuilderController::class, 'handle']),
+    Route::get('/objectPool', [ObjectPoolController::class, 'handle']),
+    Route::get('/memento', [MementoController::class, 'handle']),
+    Route::get('/prototype', [PrototypeController::Class, 'handle']),
 
 //        $payload = [
 //            'email' => 'egor_email',

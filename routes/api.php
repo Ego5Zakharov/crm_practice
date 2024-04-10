@@ -7,9 +7,6 @@ use App\Kernel\Middlewares\ApiAuthMiddleware;
 use App\Kernel\Route\Route;
 use App\Http\Controllers\TestController;
 
-// TODO добавить уникальное хранение сигнатуры токена для каждого пользователя и хранить секретный ключ приложения для доступа к JWT в файле
-// добавить
-
 return [
     Route::prefix('/api', function () {
 
