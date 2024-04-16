@@ -1,38 +1,24 @@
 <?php
 
-use App\Http\Controllers\DesignPatterns\Memento\MementoController;
-use App\Http\Controllers\DesignPatterns\ObjectPool\Builder\BuilderController;
-use App\Http\Controllers\DesignPatterns\ObjectPool\FactoryMethod\FactoryMethodController;
-use App\Http\Controllers\DesignPatterns\ObjectPool\ObjectPool\ObjectPoolController;
-use App\Http\Controllers\DesignPatterns\ObjectPool\Strategy\StrategyController;
-use App\Http\Controllers\DesignPatterns\Prototype\PrototypeController;
+use App\Http\Controllers\CacheController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RegisterController;
-use App\Kernel\Auth\Auth;
-use App\Kernel\Auth\JwtService;
-use App\Kernel\Route\Route;
 use App\Http\Controllers\TestController;
+use App\Kernel\Route\Route;
 
 return [
+    Route::get('/cache', [CacheController::class, 'cache']),
     Route::get('/register', [RegisterController::class, 'registerView']),
     Route::post('/register', [RegisterController::class, 'register']),
 
     Route::get('/login', [LoginController::class, 'loginView']),
     Route::post('/login', [LoginController::class, 'login']),
 
-
-    Route::get('/', [TestController::class, 'testViesw']),
+    Route::get('/', [TestController::class, 'testView']),
 
     Route::get('/create', [TestController::class, 'create']),
     Route::post('/post', [TestController::class, 'store']),
 
-
-    Route::get('/factoryMethod', [FactoryMethodController::class, 'handle']),
-    Route::get('/strategy', [StrategyController::class, 'handle']),
-    Route::get('/builder', [BuilderController::class, 'handle']),
-    Route::get('/objectPool', [ObjectPoolController::class, 'handle']),
-    Route::get('/memento', [MementoController::class, 'handle']),
-    Route::get('/prototype', [PrototypeController::Class, 'handle']),
 
 //        $payload = [
 //            'email' => 'egor_email',

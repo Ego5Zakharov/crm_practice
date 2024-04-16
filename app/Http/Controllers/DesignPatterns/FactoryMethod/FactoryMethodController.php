@@ -1,6 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\DesignPatterns\ObjectPool\FactoryMethod;
+namespace App\Http\Controllers\DesignPatterns\FactoryMethod;
+
+use App\Http\Controllers\DesignPatterns\ObjectPool\FactoryMethod\PhoneFactory;
+use App\Models\User;
 
 class FactoryMethodController
 {
@@ -8,7 +11,9 @@ class FactoryMethodController
     public function handle(): void
     {
         $factory = new PhoneFactory();
-
+        User::query()->where('id', '=', '5')->whereHas('users', function ($query) {
+            $query->where('id', '=', 2);
+        });
         dump($factory->createCellPhone());
 
         dump($factory->createSmartPhone());
