@@ -9,6 +9,12 @@ class Cache
     // разделитель при кэшировании - key . $separator . unique_id() . mt_rand()
     protected string $separator = "%%%%";
 
+    protected static ?Cache $instance = null;
+
+
+    private function __construct()
+    {
+    }
 
     /**
      * @param string $key
@@ -17,17 +23,19 @@ class Cache
      *
      * Сохраняет данные в кэше в файл
      */
-    public function set(string $key, mixed $data)
+    public static function set(string $key, mixed $data)
     {
-        $cachePath = $this->getCacheSavePath();
+        self::initialize();
+
+        $cachePath = self::$instance->getCacheSavePath();
 
         if (!file_exists($cachePath)) {
             mkdir($cachePath, 0777, true);
         }
 
-        $fileName = "$key" . $this->getSeparator() . uniqid("", true) . mt_rand(1, 999) . ".txt";
+        $fileName = "$key" . self::$instance->getSeparator() . uniqid("", true) . mt_rand(1, 999) . ".txt";
 
-        $cacheFiles = scandir($this->getCacheSavePath());
+        $cacheFiles = scandir(self::$instance->getCacheSavePath());
         // новый массив без ['.', '..'] файлов
         $cacheFiles = array_diff($cacheFiles, ['.', '..']);
 
@@ -38,7 +46,7 @@ class Cache
             if (
                 substr($file, 0, strlen($key)) == substr($fileName, 0, strlen($key))
             ) {
-                unlink($this->cacheSavePath . "/" . $file);
+                unlink(self::$instance->cacheSavePath . "/" . $file);
             }
         }
 
@@ -75,23 +83,25 @@ class Cache
      * Выдает данные по ключу, если не находит - false
      *
      */
-    public function get(string $key): mixed
+    public static function get(string $key): mixed
     {
-        if (!file_exists($this->getCacheSavePath())) {
+        self::initialize();
+
+        if (!file_exists(self::$instance->getCacheSavePath())) {
             throw new NotFoundCacheSavePatchException("Not found cache patch. You need create or recreate it");
         }
 
-        $cacheFiles = array_diff(scandir($this->getCacheSavePath()), ['.', '..']);
+        $cacheFiles = array_diff(scandir(self::$instance->getCacheSavePath()), ['.', '..']);
 
         foreach ($cacheFiles as $cacheFileName) {
             // ищем это слово
             $subStr = substr($cacheFileName, 0, strlen($key));
             // если слово === ключу - обрабатываем
             if ($subStr === $key) {
-                $fileHandle = fopen($this->getCacheSavePath() . "/$cacheFileName", 'r');
+                $fileHandle = fopen(self::$instance->getCacheSavePath() . "/$cacheFileName", 'r');
                 // если удалось открыть файл - обрабатываем
                 if ($fileHandle) {
-                    $fileContent = fread($fileHandle, filesize($this->getCacheSavePath() . "/$cacheFileName"));
+                    $fileContent = fread($fileHandle, filesize(self::$instance->getCacheSavePath() . "/$cacheFileName"));
                     fclose($fileHandle);
                     // расшифровываем и десериализуем файл
                     return unserialize(base64_decode($fileContent));
@@ -121,5 +131,15 @@ class Cache
         $this->separator = $separator;
     }
 
+    public static function getInstance(): ?Cache
+    {
+        return self::$instance;
+    }
 
+    public static function initialize(): void
+    {
+        if (self::$instance === null) {
+            self::$instance = new Cache();
+        }
+    }
 }

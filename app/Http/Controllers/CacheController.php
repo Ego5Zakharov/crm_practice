@@ -14,13 +14,11 @@ class CacheController
     public function cache()
     {
         // TODO сделать так чтобы файлы удалялись через некоторое время
-        $cache = new Cache();
-
         $users = User::query()->limit(15)->get();
 
-        $cache->set("users2",$users);
+        Cache::set("users2",$users);
 
-        $users = $cache->get("users2");
+        $users = Cache::get("users2");
         dd($users);
     }
 }
