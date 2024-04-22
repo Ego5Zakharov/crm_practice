@@ -9,6 +9,14 @@ class Cache
     // разделитель при кэшировании - key . $separator . unique_id() . mt_rand()
     protected string $separator = "%%%%";
 
+
+    /**
+     * @param string $key
+     * @param mixed $data
+     * @return bool
+     *
+     * Сохраняет данные в кэше в файл
+     */
     public function set(string $key, mixed $data)
     {
         $cachePath = $this->getCacheSavePath();
@@ -18,15 +26,6 @@ class Cache
         }
 
         $fileName = "$key" . $this->getSeparator() . uniqid("", true) . mt_rand(1, 999) . ".txt";
-
-        // создаем файл на запись, если не существует
-        //        $fileAlreadyHas = substr($fileName, 0, strlen($key));
-        //
-        //        dd($fileAlreadyHas);
-
-        //        if (file_exists()) {
-        //
-        //        }
 
         $cacheFiles = scandir($this->getCacheSavePath());
         // новый массив без ['.', '..'] файлов
@@ -68,13 +67,38 @@ class Cache
     }
 
 
-//$decodedData = base64_decode($data);
-//$unserializedData = unserialize($decodedData);
-//dd($unserializedData);
-
-    public function get()
+    /**
+     * @param string $key
+     * @return mixed
+     * @throws NotFoundCacheSavePatchException
+     *
+     * Выдает данные по ключу, если не находит - false
+     *
+     */
+    public function get(string $key): mixed
     {
+        if (!file_exists($this->getCacheSavePath())) {
+            throw new NotFoundCacheSavePatchException("Not found cache patch. You need create or recreate it");
+        }
 
+        $cacheFiles = array_diff(scandir($this->getCacheSavePath()), ['.', '..']);
+
+        foreach ($cacheFiles as $cacheFileName) {
+            // ищем это слово
+            $subStr = substr($cacheFileName, 0, strlen($key));
+            // если слово === ключу - обрабатываем
+            if ($subStr === $key) {
+                $fileHandle = fopen($this->getCacheSavePath() . "/$cacheFileName", 'r');
+                // если удалось открыть файл - обрабатываем
+                if ($fileHandle) {
+                    $fileContent = fread($fileHandle, filesize($this->getCacheSavePath() . "/$cacheFileName"));
+                    fclose($fileHandle);
+                    // расшифровываем и десериализуем файл
+                    return unserialize(base64_decode($fileContent));
+                }
+            }
+        }
+        return false;
     }
 
     public function setCacheSavePath(string $cacheSavePath): void

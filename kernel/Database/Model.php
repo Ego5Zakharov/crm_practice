@@ -215,6 +215,8 @@ abstract class Model implements Arrayable
 
     public function limit(int $count = 12): static
     {
+        $this->builder->setCondition("LIMIT", $count);
+
         $this->builder->setLimitCount($count);
         return $this;
     }
@@ -304,7 +306,7 @@ abstract class Model implements Arrayable
     // иначе - getWithoutBindings
     public function get(): Collection|false|array
     {
-        if ($this->builder->getQuery()) {
+        if ($this->builder->getConditions()) {
             return $this->getWithParams();
         }
 
@@ -313,6 +315,10 @@ abstract class Model implements Arrayable
 
     private function getWithParams(): Collection|array
     {
+        if (!$this->builder->getQuery()) {
+            $this->builder->setQuery("SELECT * FROM {$this->getTable()}");
+        }
+        
         if ($this->builder->getLimitCount()) {
             $this->builder->concatQuery(" LIMIT {$this->builder->getLimitCount()}");
         }

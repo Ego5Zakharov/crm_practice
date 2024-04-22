@@ -25,6 +25,7 @@ class Builder
 
     protected string $separator = "%%%";
 
+    protected array $conditions = [];
     protected array $whereOperators = [
         '=',
         '<',
@@ -62,6 +63,21 @@ class Builder
         }
 
         return $this;
+    }
+
+    public function setCondition(string $key, mixed $value): void
+    {
+        $this->conditions[$key] = $value;
+    }
+
+    public function getCondition(string $key, mixed $default = null)
+    {
+        return $this->conditions[$key] ?? $default;
+    }
+
+    public function getConditions(): array
+    {
+        return $this->conditions;
     }
 
     // возращает результат query-запроса

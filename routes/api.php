@@ -25,7 +25,6 @@ return [
         Route::prefix('/test', function () {
             Route::get('/', [TestController::class, 'index']);
         });
-
     })
 ];
 

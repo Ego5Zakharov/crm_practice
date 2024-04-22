@@ -19,7 +19,6 @@ return [
     Route::get('/create', [TestController::class, 'create']),
     Route::post('/post', [TestController::class, 'store']),
 
-
 //        $payload = [
 //            'email' => 'egor_email',
 //            'password' => '12345678'
