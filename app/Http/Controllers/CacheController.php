@@ -16,9 +16,9 @@ class CacheController
         // TODO сделать так чтобы файлы удалялись через некоторое время
         $users = User::query()->limit(15)->get();
 
-        Cache::set("users2",$users);
+//        Cache::set("users2",$users);
 
-        $users = Cache::get("users2");
+        $users = Cache::get("users");
         dd($users);
     }
 }

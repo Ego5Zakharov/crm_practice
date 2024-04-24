@@ -22,8 +22,9 @@ class Cache
      * @return bool
      *
      * Сохраняет данные в кэше в файл
+     *
      */
-    public static function set(string $key, mixed $data)
+    public static function set(string $key, mixed $data): bool
     {
         self::initialize();
 
@@ -101,6 +102,20 @@ class Cache
                 $fileHandle = fopen(self::$instance->getCacheSavePath() . "/$cacheFileName", 'r');
                 // если удалось открыть файл - обрабатываем
                 if ($fileHandle) {
+
+                    // удаляем файл, если срок его жизни истек
+                    // filectime возвращает время, прошедшее с создания файла
+                    $fileCreationTime = filectime(self::$instance->getCacheSavePath() . "/$cacheFileName");
+                    // текущее время
+                    $currentTime = time();
+                    // сколько секунд прошло с момента создания
+                    $timeElapsed = $currentTime - $fileCreationTime;
+                    // если время хранения кэша вышло - удаляем файл
+                    if ($timeElapsed >= config('cache.timeout')) {
+                        unlink(self::$instance->getCacheSavePath() . "/$cacheFileName");
+                        return false;
+                    }
+
                     $fileContent = fread($fileHandle, filesize(self::$instance->getCacheSavePath() . "/$cacheFileName"));
                     fclose($fileHandle);
                     // расшифровываем и десериализуем файл
