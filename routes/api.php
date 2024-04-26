@@ -16,8 +16,10 @@ return [
 
             Route::get('/checkJWT/', [AdminController::class, 'index']);
 
+            // TODO передавать через request какие либо данные связанные, которые можно будет обрабатывать в контроллере
             Route::prefix('/users', function () {
                 Route::get('/', [TestController::class, 'index']);
+                Route::get('/{userId}/{placementId}/', [TestController::class, 'show']);
                 Route::post('/', [TestController::class, 'store']);
             });
         });

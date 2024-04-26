@@ -76,7 +76,6 @@ class Router
                     unset($route[$index]);
                 }
             }
-
         }
 
         return $routes;
@@ -88,15 +87,39 @@ class Router
 
         foreach ($routeList as $routeListIndex => $routeValue) {
             foreach ($routeValue as $route) {
-                $this->routes[$route->getMethod()][$route->getUri()] = [$route->getAction(), $route->getMiddlewares()];
+                // Извлекаем URI маршрута без параметров
+                $uriWithoutParams = $this->stripParamsFromUri($route->getUri());
+                if(!str_ends_with($uriWithoutParams, '/')){
+                    $uriWithoutParams .= '/';
+                }
+                // Добавляем маршрут в массив маршрутов
+                $this->routes[$route->getMethod()][$uriWithoutParams] = [
+                    $route->getAction(),
+                    $route->getMiddlewares(),
+                    'params' => $route->getParams()
+                ];
             }
         }
     }
 
+    private function stripParamsFromUri(string $uri): string
+    {
+        // Если URI заканчивается на слеш, удаляем параметры, иначе возвращаем URI без изменений
+        if (str_ends_with($uri, '/')) {
+            $uriWithoutParams = preg_replace('/\/\{[^\/}]+\}|\/\{[^\/}]+\}$/u', '', $uri);
+        } else {
+            $uriWithoutParams = $uri;
+        }
+
+        // Добавляем слеш в конец URI
+        return rtrim($uriWithoutParams, '/') . '/';
+    }
+
+
+
     public function dispatch(string $uri, string $method): void
     {
         $route = $this->findRoute($uri, $method);
-
         if (is_array($route)) {
             $uri = $route[0][0];
 
@@ -118,8 +141,8 @@ class Router
                 $this->session,
                 $this->database
             );
-
             call_user_func([$class, $action]);
+
         } else {
             call_user_func($route);
         }

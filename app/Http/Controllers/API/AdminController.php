@@ -43,7 +43,7 @@ class AdminController extends Controller
 //                ->first();
 //        });
 //
-//        dd($usersWithRoleId100);
+//        dd($usersWithRoleId100);\
 
         $users = User::query()->with(['role'])->paginate(12,1);
         // TODO сделать пагинацию в ресурсах

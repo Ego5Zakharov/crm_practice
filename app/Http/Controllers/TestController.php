@@ -140,4 +140,9 @@ class TestController extends Controller
     {
 
     }
+
+    // api show method
+    public function show(mixed $userId){
+        dd(123);
+    }
 }
