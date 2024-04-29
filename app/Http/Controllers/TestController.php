@@ -147,7 +147,15 @@ class TestController extends Controller
     {
         $userId = $request->input('userId');
 
-        $users = User::query()->limit(12)->get()->sort('id', SORT_ASC);
+        $users = User::query()->limit(12)->get()
+            ->sort('id', SORT_ASC)
+            ->map(function ($user) {
+                return [
+                    'id' => $user['id'],
+                    'name' => $user['name'],
+                    'email' => $user['email']
+                ];
+            });
         dd($users);
     }
 }

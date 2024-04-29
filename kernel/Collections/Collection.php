@@ -69,10 +69,16 @@ class Collection implements Arrayable
         $this->whereCounter += 1;
     }
 
-    public function map(callable $callable, Collection|array $data)
+    public function map(callable $callable, Collection|array $data = [])
     {
         if ($data instanceof Collection) {
             $data = $data->toArray();
+        }
+        // если есть данные коллекции, но нет входящих данных
+        if (!$data && $this->items) {
+            return array_map(function ($item) use ($callable) {
+                return $callable($item);
+            }, $this->items);
         }
 
         return array_map(function ($item) use ($callable) {
@@ -235,14 +241,13 @@ class Collection implements Arrayable
      * @param string $key
      * @param int $orderBy
      * @return $this
-     * Сортировка по возрастанию - ASC
-     * Сортировка по убыванию - DESC
+     * Сортировка по возрастанию - SORT_ASC
+     * Сортировка по убыванию - SORT_DESC
      */
-    public function sort(string $key, int $orderBy = SORT_ASC | SORT_DESC)
+    public function sort(string $key, int $orderBy = SORT_ASC | SORT_DESC): static
     {
         array_multisort(array_column($this->items, $key), $orderBy, $this->items);
 
-//       ksort($this->items);
         return $this;
     }
 
