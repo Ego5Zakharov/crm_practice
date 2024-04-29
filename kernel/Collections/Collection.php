@@ -231,6 +231,21 @@ class Collection implements Arrayable
         return $this->items;
     }
 
+    /**
+     * @param string $key
+     * @param int $orderBy
+     * @return $this
+     * Сортировка по возрастанию - ASC
+     * Сортировка по убыванию - DESC
+     */
+    public function sort(string $key, int $orderBy = SORT_ASC | SORT_DESC)
+    {
+        array_multisort(array_column($this->items, $key), $orderBy, $this->items);
+
+//       ksort($this->items);
+        return $this;
+    }
+
     public function toArrayWithOperators(): void
     {
         $updatedArray = [];

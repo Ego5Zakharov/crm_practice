@@ -10,6 +10,7 @@ use App\Kernel\Database\Model;
 use App\Kernel\Database\Query\Exceptions\WhereOperatorNotFoundException;
 use App\Kernel\Json\AnonymousJsonCollection;
 use App\Kernel\Json\Response;
+use App\Kernel\Request\Request;
 use App\Kernel\View\ViewNotFoundException;
 use App\Models\Role;
 use App\Models\User;
@@ -142,7 +143,11 @@ class TestController extends Controller
     }
 
     // api show method
-    public function show(mixed $userId){
-        dd(123);
+    public function show(Request $request)
+    {
+        $userId = $request->input('userId');
+
+        $users = User::query()->limit(12)->get()->sort('id', SORT_ASC);
+        dd($users);
     }
 }

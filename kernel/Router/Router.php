@@ -89,7 +89,7 @@ class Router
             foreach ($routeValue as $route) {
                 // Извлекаем URI маршрута без параметров
                 $uriWithoutParams = $this->stripParamsFromUri($route->getUri());
-                if(!str_ends_with($uriWithoutParams, '/')){
+                if (!str_ends_with($uriWithoutParams, '/')) {
                     $uriWithoutParams .= '/';
                 }
                 // Добавляем маршрут в массив маршрутов
@@ -116,11 +116,10 @@ class Router
     }
 
 
-
     public function dispatch(string $uri, string $method): void
     {
         $route = $this->findRoute($uri, $method);
-        if (is_array($route)) {
+        if (is_array($route) && !$route[0] instanceof Closure) {
             $uri = $route[0][0];
 
             $action = $route[0][1];
@@ -133,7 +132,6 @@ class Router
                 $middleware->handle();
             }
 
-
             // dependency injection
             $class = new $uri(
                 $this->request,
@@ -141,17 +139,27 @@ class Router
                 $this->session,
                 $this->database
             );
-            call_user_func([$class, $action]);
 
+
+            call_user_func([$class, $action], $this->request);
         } else {
-            call_user_func($route);
+            // если есть $middlewares у Closure - вызвать
+            if (isset($route[1])) {
+                $middlewares = $route[1];
+
+                // применяем middlewares
+                foreach ($middlewares as $middleware) {
+                    $middleware = new $middleware();
+                    $middleware->handle();
+                }
+            }
+
+            call_user_func($route[0],$this->request);
         }
     }
 
     public function findRoute(string $uri, string $method)
     {
-//        dump($uri,$method);
-//        dd($this->routes);
         if (!isset($this->routes[$method][$uri])) {
             $this->notFound();
         }
@@ -162,6 +170,7 @@ class Router
 
     #[NoReturn] public function notFound(): void
     {
+        http_response_code(404);
         echo "Not Found|404";
         exit();
     }
