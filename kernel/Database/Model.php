@@ -12,6 +12,7 @@ use App\Kernel\Pagination\LengthAwarePaginator;
 use App\Models\User;
 use Closure;
 use Dotenv\Dotenv;
+use Exception;
 use PDO;
 
 abstract class Model implements Arrayable
@@ -44,16 +45,21 @@ abstract class Model implements Arrayable
     public function __construct(array|Model $data = [])
     {
         $this->database = Database::getInstance();
-
         $this->builder = new Builder($this->database);
 
-        foreach ($data as $key => $value) {
-            $this->$key = $value;
+        // Проверяем тип данных
+        if (is_array($data) || $data instanceof Model) {
+            foreach ($data as $key => $value) {
+                $this->$key = $value;
+            }
         }
 
         self::$instance = $this;
     }
 
+    /**
+     * @throws Exception
+     */
     public function __get(string $value)
     {
         // подгружаем связи
@@ -63,7 +69,15 @@ abstract class Model implements Arrayable
             return $this->relations[$value];
         }
 
-        if (array_key_exists($value, $this->original)) {
+        // приводим аттрибут к типу данных, который находится в массиве $casts
+        if (array_key_exists($value, $this->getCasts())) {
+            if (array_key_exists($value, $this->getAttributes())) {
+                $castedValue = $this->getCastType($this->casts[$value], $this->attributes[$value]);
+                $this->attributes[$value] = $castedValue;
+            }
+        }
+
+        if (array_key_exists($value, $this->getOriginals())) {
             return $this->original[$value];
         } else if (array_key_exists($value, $this->getAttributes())) {
             return $this->getAttribute($value);
@@ -72,8 +86,16 @@ abstract class Model implements Arrayable
         return null;
     }
 
+    /**
+     * @throws Exception
+     */
     public function __set(mixed $key, mixed $value)
     {
+        // приводим значение к $casts, если совпали ключи
+        if (array_key_exists($key, $this->getCasts())) {
+            $value = $this->getCastType($this->casts[$key], $value);
+        }
+
         if ($this->guard && in_array($key, $this->fillable)) {
 
             $this->original[$key] = $value;
@@ -153,7 +175,6 @@ abstract class Model implements Arrayable
         }
 
         $model = new $this($fetchData);
-
         $model->with($this->getWithRelations());
 
         $model->unsetWithRelationsKeys();
@@ -318,7 +339,7 @@ abstract class Model implements Arrayable
         if (!$this->builder->getQuery()) {
             $this->builder->setQuery("SELECT * FROM {$this->getTable()}");
         }
-        
+
         if ($this->builder->getLimitCount()) {
             $this->builder->concatQuery(" LIMIT {$this->builder->getLimitCount()}");
         }
@@ -467,9 +488,9 @@ abstract class Model implements Arrayable
             $paramName = ":param" . $this->builder->getWhereCallsCount();
 
             if (str_contains($this->builder->getQuery(), 'WHERE')) {
-                $this->builder->concatQuery(" AND $key $operator $paramName AND id={$this->getAttribute('id')}");
+                $this->builder->concatQuery(" AND $key $operator $paramName");
             } else {
-                $this->builder->setQuery("{$this->select($this->table)} WHERE $key $operator $paramName AND id={$this->getAttribute('id')}");
+                $this->builder->setQuery("{$this->select($this->table)} WHERE $key $operator $paramName");
             }
 
             if ($value === null) {
@@ -477,12 +498,10 @@ abstract class Model implements Arrayable
             }
 
             $this->builder->bindParam($paramName, $value);
-
             return $this;
         } catch (WhereOperatorNotFoundException $exception) {
             // TODO Log Exceptions
         }
-
     }
 
     public function where(string $key, mixed $operator, mixed $value): ?static
@@ -519,8 +538,7 @@ abstract class Model implements Arrayable
         return $this;
     }
 
-    public
-    function with(array $relations = []): Model
+    public function with(array $relations = []): Model
     {
         foreach ($relations as $index => $relation) {
             /**
@@ -594,46 +612,53 @@ abstract class Model implements Arrayable
         }
     }
 
-    public function whereHas(string $relation, Closure $closure): array
+    private function setRawAttributes(array $attributes): void
     {
-        $models = $this->newQuery()->with([$relation])->get()->toArray();
+        $this->setAttributes($attributes);
+        $this->setOriginals($attributes);
+    }
 
-        // модели с нужной связью
-        $modelsWithRelations = [];
+    private function loadModelWithRelations(array $modelData, array $relations)
+    {
+        // создаем экземпляр модели
+        $model = new static;
 
-        foreach ($models as $index => $model) {
-            if (isset($model['relations']) && $model['relations'][$relation]) {
-                $modelsWithRelations[] = $model;
+        // Загружаем атрибуты модели из данных
+        $model->setRawAttributes($modelData);
+
+        $model->with([$relations]);
+
+        return $model;
+    }
+
+    public function whereHas(string $relation, Closure $closure)
+    {
+        $models = $this->newQuery()->get();
+        $resultModels = [];
+
+        foreach ($models->toArray() as $modelData) {
+            $model = $this->loadModelWithRelations($modelData, [$relation]);
+
+            // Проверяем, существует ли связь $relation в модели
+            if ($model->$relation) {
+                // делать запрос этой модели и выдавать все данные по этому запросу
+                // БРАТЬ текущую модель и делать запрос на то, что в этой модели есть эта связь с данными
+                if ($closureResult = $closure($model->$relation)) {
+
+//                    foreach ($model->getRelations() as $relation) {
+//                        // вызывать все аттрибуты, и их значения и сравнивать их,
+//                        // если они совпадают - добавлять в массив связей
+//                        if (array_intersect($relation->getAttributes(), $closureResult->getAttributes())) {
+                            $resultModels[] = $model;
+//                        }
+//                    }
+
+                }
+
             }
         }
 
-        // модели прошедшие условия запроса
-        $modelsQueryResult = [];
-
-        foreach ($modelsWithRelations as $index => $modelsWithRelation) {
-            $currentRelation = $modelsWithRelation['relations'][$relation];
-            $result = $closure($currentRelation);
-            // убеждаемся что результат существует
-            if ((bool)$result) {
-                $modelsQueryResult[] = $modelsWithRelation;
-            }
-        }
-
-        // приводим данные из массива к форме модели
-        $models = [];
-
-        foreach ($modelsQueryResult as $model) {
-            $relations = $model['relations'];
-            unset($model['relations']);
-            $clonedModel = clone $this;
-            $clonedModel->setAttributes($model);
-            $clonedModel->setOriginals($model);
-            $clonedModel->with($relations);
-            $clonedModel->unsetWithRelationsKeys();
-            $models[] = $clonedModel;
-        }
-
-        return $models;
+        return $resultModels;
     }
 
 

@@ -147,15 +147,47 @@ class TestController extends Controller
     {
         $userId = $request->input('userId');
 
-        $users = User::query()->limit(12)->get()
-            ->sort('id', SORT_ASC)
-            ->map(function ($user) {
-                return [
-                    'id' => $user['id'],
-                    'name' => $user['name'],
-                    'email' => $user['email']
-                ];
-            });
-        dd($users);
+//        $users = User::query()->limit(12)->get()
+//            ->sort('id', SORT_ASC)
+//            ->map(function ($user) {
+//                return [
+//                    'id' => $user['id'],
+//                    'name' => $user['name'],
+//                    'email' => $user['email']
+//                ];
+//            });
+
+
+//        $user = User::query()->create([
+//            'email' => 'egor@mail.ru',
+//            'name' => 123456,
+//            'password' => Auth::hashPassword('12345678'),
+//        ]);
+
+        $users = User::query()->whereHas('role', function ($query) {
+            /**
+             * @var Role $query
+             */
+            return $query->whereHasWhere('name', '=', 'egorAdmin')->first();
+        });
+
+
+        foreach ($users as $user) {
+            dump($user);
+        }
+
+//        $user = new User();
+//        $user->email = "egor@mail.ru";
+//        $user->name = "1234567";
+//        $user->password = Auth::hashPassword('12345678');
+//
+//        $user = $user->create();
+
+//        dd(collect($users)->map(function ($user) {
+//            dd($user);
+//            return [
+//                'id' => $user['id']
+//            ];
+//        }));
     }
 }

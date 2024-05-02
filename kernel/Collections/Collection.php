@@ -74,6 +74,7 @@ class Collection implements Arrayable
         if ($data instanceof Collection) {
             $data = $data->toArray();
         }
+
         // если есть данные коллекции, но нет входящих данных
         if (!$data && $this->items) {
             return array_map(function ($item) use ($callable) {

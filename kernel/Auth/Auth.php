@@ -55,7 +55,7 @@ class Auth
         return password_verify($enteredPassword, $storedHashedPassword);
     }
 
-    // проверяет, есть ли такой емейл и если есть, проверяет пароли
+    // проверяет, есть ли такой email и если есть, проверяет пароли
     public static function attempt(string $email, string $password): bool
     {
         $user = User::query()->where('email', '=', $email)->first();

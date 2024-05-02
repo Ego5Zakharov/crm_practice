@@ -2,7 +2,7 @@
 
 namespace App\Kernel\Database\Concerns;
 
-use PDO;
+use Exception;
 
 trait HasAttributes
 {
@@ -46,6 +46,11 @@ trait HasAttributes
         $this->casts = $casts;
     }
 
+    public function getCasts(): array
+    {
+        return $this->casts;
+    }
+
     public function setChanges(array $changes): void
     {
         $this->changes = $changes;
@@ -79,5 +84,25 @@ trait HasAttributes
     public function getChanges(): array
     {
         return $this->changes;
+    }
+
+
+    /**
+     * @param string $dataType
+     * @param mixed $value
+     * @return string|int|bool|float
+     *
+     * Применяет тип данных к переменной
+     * @throws Exception
+     */
+    private function getCastType(string $dataType, mixed $value): string|int|bool|float
+    {
+        return match ($dataType) {
+            "integer", "int" => (int)$value,
+            "float", "double" => (float)$value,
+            "boolean", "bool" => (bool)$value,
+            "string", "str" => (string)$value,
+            default => throw new Exception("Incorrect data type - $dataType"),
+        };
     }
 }

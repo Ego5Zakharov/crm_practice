@@ -24,6 +24,12 @@ class User extends Model
         'role_id'
     ];
 
+    protected array $casts = [
+        'name' => 'string',
+        'email' => 'string',
+        'password' => 'string',
+    ];
+
     public function role()
     {
         return $this->hasOne(Role::class, 'role_id', 'id');
