@@ -124,17 +124,18 @@ class Router
     /**
      * @throws ReflectionException
      * @throws NotFoundCacheSavePatchException
+     * Распаковывает роут
      */
     public function dispatch(string $uri, string $method): void
     {
         $route = $this->findRoute($uri, $method);
+
         if (is_array($route) && !$route[0] instanceof Closure) {
             $uri = $route[0][0];
 
             $action = $route[0][1];
 
             $middlewares = $route[1];
-
 
             /**
              * Применяем все общие middlewares на все роуты
@@ -162,11 +163,10 @@ class Router
             if (isset($route[1])) {
                 $middlewares = $route[1];
 
-                // применяем middlewares
-                foreach ($middlewares as $middleware) {
-                    $middleware = new $middleware();
-                    $middleware->handle();
-                }
+                /**
+                 * Применяем middlewares которые есть на самом роуте
+                 */
+                $this->applyMiddlewaresToRoute($middlewares);
             }
 
             call_user_func($route[0], $this->request);
