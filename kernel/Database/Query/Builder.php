@@ -9,7 +9,6 @@ use PDOStatement;
 class Builder
 {
     protected string $query = "";
-
     protected PDOStatement $statement;
 
     protected Database $database;
@@ -99,7 +98,7 @@ class Builder
     {
         return $this->getStatement()->fetchAll($pdoFetchMode);
     }
-
+    
 
     public function getQuery(): string
     {

@@ -327,7 +327,7 @@ abstract class Model implements Arrayable
     // иначе - getWithoutBindings
     public function get(): Collection|false|array
     {
-        if ($this->builder->getConditions()) {
+        if ($this->builder->getConditions() || $this->builder->getBindParams()) {
             return $this->getWithParams();
         }
 
@@ -339,7 +339,6 @@ abstract class Model implements Arrayable
         if (!$this->builder->getQuery()) {
             $this->builder->setQuery("SELECT * FROM {$this->getTable()}");
         }
-
         if ($this->builder->getLimitCount()) {
             $this->builder->concatQuery(" LIMIT {$this->builder->getLimitCount()}");
         }
@@ -350,6 +349,8 @@ abstract class Model implements Arrayable
             ? $this->builder->getStatement()->fetchAll(PDO::FETCH_ASSOC)
             : null;
 
+//        dd($this->builder->getQuery());
+        dd($this->builder->getBindParams());
         if (!$fetchData) {
             return [];
         }
@@ -473,48 +474,12 @@ abstract class Model implements Arrayable
         return $model;
     }
 
-    /**
-     * Если вызывается метод whereHas - where отрабатывает в рамках этих данных
-     */
-    public function whereHasWhere(string $key, mixed $operator, mixed $value)
-    {
-        try {
-            if (!in_array($operator, $this->builder->getWhereOperators())) {
-                throw new WhereOperatorNotFoundException("$operator does not exist.");
-            }
-
-            $this->builder->incrementWhereCallsCount();
-
-            $paramName = ":param" . $this->builder->getWhereCallsCount();
-
-            if (str_contains($this->builder->getQuery(), 'WHERE')) {
-                $this->builder->concatQuery(" AND $key $operator $paramName");
-            } else {
-                $this->builder->setQuery("{$this->select($this->table)} WHERE $key $operator $paramName");
-            }
-
-            if ($value === null) {
-                $value = 'NULL';
-            }
-
-            $this->builder->bindParam($paramName, $value);
-            return $this;
-        } catch (WhereOperatorNotFoundException $exception) {
-            // TODO Log Exceptions
-        }
-    }
-
     public function where(string $key, mixed $operator, mixed $value): ?static
     {
         try {
             if (!in_array($operator, $this->builder->getWhereOperators())) {
                 throw new WhereOperatorNotFoundException("$operator does not exist.");
             }
-
-            if (debug_backtrace()[2]['function'] === "whereHas") {
-                return $this->whereHasWhere($key, $operator, $value);
-            }
-
 
             $this->builder->incrementWhereCallsCount();
 
@@ -536,6 +501,11 @@ abstract class Model implements Arrayable
         }
 
         return $this;
+    }
+
+    public function getQuery(): string
+    {
+        return $this->builder->getQuery();
     }
 
     public function with(array $relations = []): Model
@@ -631,34 +601,36 @@ abstract class Model implements Arrayable
         return $model;
     }
 
-    public function whereHas(string $relation, Closure $closure)
+    public function whereHas(string $relation, string $relationPatch, Closure $closure)
     {
-        $models = $this->newQuery()->get();
-        $resultModels = [];
+        $relationModel = new $relationPatch();
 
-        foreach ($models->toArray() as $modelData) {
-            $model = $this->loadModelWithRelations($modelData, [$relation]);
+        $relatedQuery = $relationModel->query(); // Получаем объект запроса из связанной модели
 
-            // Проверяем, существует ли связь $relation в модели
-            if ($model->$relation) {
-                // делать запрос этой модели и выдавать все данные по этому запросу
-                // БРАТЬ текущую модель и делать запрос на то, что в этой модели есть эта связь с данными
-                if ($closureResult = $closure($model->$relation)) {
+        /**
+         * @var Model $closureModel
+         */
+        $closureModel = $closure($relatedQuery);
 
-//                    foreach ($model->getRelations() as $relation) {
-//                        // вызывать все аттрибуты, и их значения и сравнивать их,
-//                        // если они совпадают - добавлять в массив связей
-//                        if (array_intersect($relation->getAttributes(), $closureResult->getAttributes())) {
-                            $resultModels[] = $model;
-//                        }
-//                    }
+        $sql = $this->select($this->getTable()) . " WHERE EXISTS ({$closureModel->builder->getQuery()})";
 
-                }
-
-            }
+        // Строим основной запрос с учетом подзапроса
+        if (
+            str_contains($this->builder->getQuery(), 'WHERE') ||
+            str_contains($this->builder->getQuery(), 'AND WHERE') ||
+            str_contains($this->builder->getQuery(), 'OR WHERE')
+        ) {
+            $this->builder->concatQuery(" " . $sql);
+            dd($this->builder->getQuery());
+        } else {
+            $this->builder->setQuery($sql);
         }
 
-        return $resultModels;
+        $this->builder->setBindParams(
+            array_merge($this->builder->getBindParams(), $closureModel->builder->getBindParams())
+        );
+
+        return $this;
     }
 
 

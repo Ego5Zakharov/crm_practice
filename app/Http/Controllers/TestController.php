@@ -23,12 +23,24 @@ class TestController extends Controller
      */
     public function testView()
     {
-        return $this->view->view('test',
-            [
-                'array' => [
-                    1, 2, 3, 4, 5
-                ]
-            ]);
+        $users = User::query()
+            ->where('role_id', '!=', null)
+            ->whereHas('role', Role::class, function ($query) {
+                /**
+                 * @var Role $query
+                 */
+                return $query->where('name', '=', 'user');
+            });
+
+        dd($users);
+
+
+//        return $this->view->view('test',
+//            [
+//                'array' => [
+//                    1, 2, 3, 4, 5
+//                ]
+//            ]);
     }
 
     public function index()
@@ -137,8 +149,17 @@ class TestController extends Controller
     }
 
 
-    public function store()
+    public function store(Request $request)
     {
+        $validated = $request->validate([
+            'email' => [
+                'string', 'min:1', 'max:5'
+            ],
+
+            'password' => [
+                'string', 'min:8'
+            ],
+        ]);
 
     }
 
