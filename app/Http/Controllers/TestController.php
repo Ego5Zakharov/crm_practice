@@ -155,7 +155,7 @@ class TestController extends Controller
     {
         $validatedData = $request->validated();
 
-        Throtlle::rateLimiter();
+
     }
 
     // api show method

@@ -8,7 +8,7 @@ use JetBrains\PhpStorm\NoReturn;
 abstract class Middleware
 {
     public abstract function handle();
-
+    
     #[NoReturn] public function httpError($status = 400, $data = []): void
     {
         http_response_code($status);

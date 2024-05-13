@@ -3,9 +3,8 @@
 use App\Http\Controllers\API\AdminController;
 use App\Http\Controllers\API\LoginController;
 use App\Http\Controllers\API\RegisterController;
-use App\Kernel\Middlewares\ApiAuthMiddleware;
-use App\Kernel\Route\Route;
 use App\Http\Controllers\TestController;
+use App\Kernel\Route\Route;
 
 return [
     Route::prefix('/api', function () {

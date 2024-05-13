@@ -2,7 +2,9 @@
 
 namespace App\Kernel\Router;
 
+use App\Http\Middlewares\MiddlewareKernel;
 use App\Http\Requests\TestRequest;
+use App\Kernel\Cache\NotFoundCacheSavePatchException;
 use App\Kernel\Database\Database;
 use App\Kernel\Request\Request;
 use App\Kernel\Route\Route;
@@ -121,6 +123,7 @@ class Router
 
     /**
      * @throws ReflectionException
+     * @throws NotFoundCacheSavePatchException
      */
     public function dispatch(string $uri, string $method): void
     {
@@ -132,11 +135,16 @@ class Router
 
             $middlewares = $route[1];
 
-            // применяем middlewares
-            foreach ($middlewares as $middleware) {
-                $middleware = new $middleware();
-                $middleware->handle();
-            }
+
+            /**
+             * Применяем все общие middlewares на все роуты
+             */
+            $this->applyKernelMiddlewares();
+
+            /**
+             * Применяем middlewares которые есть на самом роуте
+             */
+            $this->applyMiddlewaresToRoute($middlewares);
 
             // dependency injection
             $class = new $uri(
@@ -146,21 +154,7 @@ class Router
                 $this->database
             );
 
-            // подставлять Request в зависимости от нужных аргументов класса
-            $reflectionClass = new ReflectionClass($class);
-
-            if ($method = $reflectionClass->getMethod($action)) {
-                $parameters = $method->getParameters();
-                foreach ($parameters as $parameter) {
-                    if ($parameter->getName() === "request") {
-                        $request = $parameter->getType();
-
-                        $requestPath = $request->getName();
-
-                        $this->request = new $requestPath($_GET, $_POST, $_SERVER, $_COOKIE, $_FILES);
-                    }
-                }
-            }
+            $this->injectRequest($class, $action);
 
             call_user_func([$class, $action], $this->request);
         } else {
@@ -188,6 +182,63 @@ class Router
         return $this->routes[$method][$uri];
     }
 
+    /**
+     * @param string $classPath
+     * @param string $actionPath
+     * @return void
+     * @throws ReflectionException
+     * Подменяет $request на тот, что находится в методе контроллера
+     * DI
+     */
+    public function injectRequest(string $classPath, string $actionPath): void
+    {
+        // подставлять Request в зависимости от нужных аргументов класса
+        $reflectionClass = new ReflectionClass($classPath);
+
+        if ($method = $reflectionClass->getMethod($actionPath)) {
+            $parameters = $method->getParameters();
+            foreach ($parameters as $parameter) {
+                if ($parameter->getName() === "request") {
+                    $request = $parameter->getType();
+
+                    $requestPath = $request->getName();
+
+                    $this->request = new $requestPath($_GET, $_POST, $_SERVER, $_COOKIE, $_FILES);
+                }
+            }
+        }
+    }
+
+    /**
+     * @return void
+     * @throws NotFoundCacheSavePatchException
+     * Применяет общие middlewares ко всем роутам
+     */
+    public function applyKernelMiddlewares(): void
+    {
+        /**
+         * @param $middlewareKernel MiddlewareKernel
+         * Применяем middlewares
+         */
+        $middlewareKernel = new MiddlewareKernel();
+
+        foreach ($middlewareKernel->getMiddlewares() as $middlewarePath) {
+            (new $middlewarePath())->handle();
+        }
+    }
+
+    /**
+     * @param array $middlewares
+     * @return void
+     * Применяет middlewares к определенному роуту
+     */
+    public function applyMiddlewaresToRoute(array $middlewares = []): void
+    {
+        foreach ($middlewares as $middleware) {
+            $middleware = new $middleware();
+            $middleware->handle();
+        }
+    }
 
     #[NoReturn] public function notFound(): void
     {

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Kernel\Middlewares;
+namespace App\Http\Middlewares;
 
 use App\Kernel\Auth\Auth;
+use App\Kernel\Middlewares\Middleware;
 use App\Models\Token;
-use App\Models\User;
 
 class ApiAuthMiddleware extends Middleware
 {
