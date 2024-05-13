@@ -2,11 +2,12 @@
 
 namespace App\Kernel\Request\Rules;
 
-class IsStringRule extends Rule
+class MailRule extends Rule
 {
     /**
      * @param string $valueName
      * @param mixed $value
+     * @param mixed $requestValue
      * @return true|array
      *
      * Возвращает результат и ошибку, если она есть
@@ -14,10 +15,10 @@ class IsStringRule extends Rule
      */
     public static function handle(string $valueName, mixed $value): true|array
     {
-        $result = is_string($value);
+        $result = filter_var($value,FILTER_VALIDATE_EMAIL);
 
         if ($result === false) {
-            $error = IsStringRule::getFeedback($valueName);
+            $error = MailRule::getFeedback($valueName);
         }
 
         return [
@@ -28,6 +29,6 @@ class IsStringRule extends Rule
 
     public static function getFeedback(string $valueName): string
     {
-        return "Аргумент $valueName не является строкой.";
+        return "Аргумент $valueName не является валидным адресом почты.";
     }
 }

@@ -156,7 +156,7 @@ class TestController extends Controller
                 // TODO сделать так, что если это строка, то проверялось колво символов в мин и макс
                 // если это инт, то приводилось к инту и проверялось,
                 // если double тогда к дабл приводилось и проверялось
-                'int', 'min:13', 'max:16'
+                'string', 'min:1', 'max:16', 'email'
             ],
 
             'password' => [
@@ -164,6 +164,7 @@ class TestController extends Controller
             ],
         ]);
 
+        dd($validated);
     }
 
     // api show method

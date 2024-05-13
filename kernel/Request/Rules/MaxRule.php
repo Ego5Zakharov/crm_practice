@@ -2,7 +2,7 @@
 
 namespace App\Kernel\Request\Rules;
 
-class MinRule extends Rule
+class MaxRule extends Rule
 {
     /**
      * @param string $valueName
@@ -23,13 +23,13 @@ class MinRule extends Rule
             if ($argumentName === $valueName) {
                 foreach ($arrayRule as $rule) {
                     if ($rule === 'string') {
-                        $result = $value <= strlen($requestValue);
+                        $result = $value >= strlen($requestValue);
                     } elseif ($rule === 'int') {
-                        $result = intval($value) <= intval($requestValue);
+                        $result = intval($value) >= intval($requestValue);
                     } elseif ($rule === 'double') {
-                        $result = doubleval($value) <= doubleval($requestValue);
+                        $result = doubleval($value) >= doubleval($requestValue);
                     } elseif ($rule === 'float') {
-                        $result = floatval($value) <= floatval($requestValue);
+                        $result = floatval($value) >= floatval($requestValue);
                     }
                 }
             }
@@ -46,7 +46,7 @@ class MinRule extends Rule
         }
 
         if ($result === false) {
-            $error = MinRule::getFeedback($valueName);
+            $error = MaxRule::getFeedback($valueName);
         }
 
         return [
@@ -57,6 +57,6 @@ class MinRule extends Rule
 
     public static function getFeedback(string $valueName): string
     {
-        return "Аргумент $valueName меньше заданного количества";
+        return "Аргумент $valueName больше заданного количества";
     }
 }

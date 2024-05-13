@@ -5,6 +5,8 @@ namespace App\Kernel\Request;
 use App\Kernel\Config\Config;
 use App\Kernel\Request\Rules\ExistsValueRule;
 use App\Kernel\Request\Rules\IsStringRule;
+use App\Kernel\Request\Rules\MailRule;
+use App\Kernel\Request\Rules\MaxRule;
 use App\Kernel\Request\Rules\MinRule;
 
 class Request
@@ -111,7 +113,11 @@ class Request
 
     /**
      * @param array $arrayRules
-     * @return void
+     *
+     * Метод валидирующий поля
+     */
+    /**
+     * @param array $arrayRules
      *
      * Метод валидирующий поля
      */
@@ -120,8 +126,10 @@ class Request
         /**
          * @param array $arrayRules - массив правил валидации
          */
-
         $this->arrayRules = $arrayRules;
+
+        $rulesArguments = [];
+
         foreach ($arrayRules as $ruleName => $rules) {
             /**
              * @param array $rules - правила элемента массива
@@ -148,11 +156,17 @@ class Request
                             'value' => $ruleData[1]
                         ];
 
+                        // Добавляем новый элемент в $rulesArguments
+                        $rulesArguments[$ruleName] = $ruleValue;
+
                         $this->validateRule($ruleName, $ruleData['name'], $ruleData['value'], $ruleValue);
                     } else {
                         /*
                          * Если нет правил похожих на структуру: min:3, max:5
                          */
+                        // Добавляем новый элемент в $rulesArguments
+                        $rulesArguments[$ruleName] = $ruleValue;
+
                         $this->validateRule($ruleName, $rule, $ruleValue, null);
                     }
                 }
@@ -164,36 +178,47 @@ class Request
             }
         }
 
-        dd($this->getErrors());
+        if (count($this->getErrors()) > 0) {
+            return $this->getErrors();
+        }
+
+        dd($rulesArguments);
     }
+
 
     public function validateRule(string $ruleName, string $rule, mixed $value, mixed $requestValue): void
     {
         switch ($rule) {
             case "email":
-                dd("email validation");
+                $result = MailRule::handle($ruleName, $value);
+
+                if ($result && isset($result['error']) && $result['error'] !== false) {
+                    $this->setError($ruleName, $result['error']);
+                }
                 break;
             case "string":
-                // если $result['error'] возвращает false - записываем в ошибку
-
+                /*
+                 * Если $result['error'] возвращает false - записываем в ошибку
+                 */
                 $result = IsStringRule::handle($ruleName, $value);
 
                 if ($result && isset($result['error']) && $result['error'] !== false) {
                     $this->setError($ruleName, $result['error']);
                 }
-
-//                dd($this->getErrors());
                 break;
-
             case "min":
-                $result = MinRule::handle($ruleName, $value, $requestValue,$this->arrayRules);
+                $result = MinRule::handle($ruleName, $value, $requestValue, $this->arrayRules);
 
                 if ($result && isset($result['error']) && $result['error'] !== false) {
                     $this->setError($ruleName, $result['error']);
                 }
                 break;
             case "max":
-//                dd("max validation");
+                $result = MaxRule::handle($ruleName, $value, $requestValue, $this->arrayRules);
+
+                if ($result && isset($result['error']) && $result['error'] !== false) {
+                    $this->setError($ruleName, $result['error']);
+                }
                 break;
             default:
                 break;
