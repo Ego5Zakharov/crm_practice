@@ -190,7 +190,7 @@ class Router
      * Подменяет $request на тот, что находится в методе контроллера
      * DI
      */
-    public function injectRequest(string $classPath, string $actionPath): void
+    public function injectRequest(mixed $classPath, string $actionPath): void
     {
         // подставлять Request в зависимости от нужных аргументов класса
         $reflectionClass = new ReflectionClass($classPath);

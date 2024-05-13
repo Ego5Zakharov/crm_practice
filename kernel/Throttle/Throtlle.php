@@ -17,10 +17,12 @@ class Throtlle
     {
         $request = \request();
 
-        $userSessionId = $request->getServerUserSession();
+        $throtlleCounter = 1;
 
-        if (Cache::exists($userSessionId)) {
-            $throtlleCounter = Cache::get($userSessionId);
+        $userIp = $request->getIp();
+
+        if (Cache::exists($userIp)) {
+            $throtlleCounter = Cache::get($userIp);
 
             if ($throtlleCounter > $maxCountPerMinute) {
                 echo "Ошибка! Слишком частые запросы!";
@@ -28,10 +30,8 @@ class Throtlle
             }
 
             $throtlleCounter++;
-            Cache::set($userSessionId, $throtlleCounter);
-        } else {
-            Cache::set($userSessionId, 1);
         }
 
+        Cache::set($userIp, $throtlleCounter);
     }
 }

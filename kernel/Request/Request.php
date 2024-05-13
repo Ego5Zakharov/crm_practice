@@ -3,11 +3,13 @@
 namespace App\Kernel\Request;
 
 use App\Kernel\Config\Config;
+use App\Kernel\Database\Database;
 use App\Kernel\Request\Rules\ExistsValueRule;
 use App\Kernel\Request\Rules\IsStringRule;
 use App\Kernel\Request\Rules\MailRule;
 use App\Kernel\Request\Rules\MaxRule;
 use App\Kernel\Request\Rules\MinRule;
+use App\Kernel\Session\Session;
 
 class Request
 {
@@ -264,4 +266,8 @@ class Request
         return null;
     }
 
+    public function getIp()
+    {
+        return $this->server['REMOTE_ADDR'];
+    }
 }
