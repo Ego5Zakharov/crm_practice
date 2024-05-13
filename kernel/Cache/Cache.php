@@ -126,6 +126,19 @@ class Cache
         return false;
     }
 
+    /**
+     * @throws NotFoundCacheSavePatchException
+     */
+    public static function exists(string $key)
+    {
+        $result = self::get($key);
+        /**
+         * Если значение не найдено - вернуть null,
+         * иначе - вернуть значение
+         */
+        return $result === false ? false : $result;
+    }
+
     public function setCacheSavePath(string $cacheSavePath): void
     {
         $this->cacheSavePath = $cacheSavePath;

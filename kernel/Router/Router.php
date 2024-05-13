@@ -2,6 +2,7 @@
 
 namespace App\Kernel\Router;
 
+use App\Http\Requests\TestRequest;
 use App\Kernel\Database\Database;
 use App\Kernel\Request\Request;
 use App\Kernel\Route\Route;
@@ -9,6 +10,8 @@ use App\Kernel\Session\Session;
 use App\Kernel\View\View;
 use Closure;
 use JetBrains\PhpStorm\NoReturn;
+use ReflectionClass;
+use ReflectionException;
 use Symfony\Component\VarDumper\Dumper\DataDumperInterface;
 
 class Router
@@ -116,6 +119,9 @@ class Router
     }
 
 
+    /**
+     * @throws ReflectionException
+     */
     public function dispatch(string $uri, string $method): void
     {
         $route = $this->findRoute($uri, $method);
@@ -140,6 +146,21 @@ class Router
                 $this->database
             );
 
+            // подставлять Request в зависимости от нужных аргументов класса
+            $reflectionClass = new ReflectionClass($class);
+
+            if ($method = $reflectionClass->getMethod($action)) {
+                $parameters = $method->getParameters();
+                foreach ($parameters as $parameter) {
+                    if ($parameter->getName() === "request") {
+                        $request = $parameter->getType();
+
+                        $requestPath = $request->getName();
+
+                        $this->request = new $requestPath($_GET, $_POST, $_SERVER, $_COOKIE, $_FILES);
+                    }
+                }
+            }
 
             call_user_func([$class, $action], $this->request);
         } else {
@@ -154,7 +175,7 @@ class Router
                 }
             }
 
-            call_user_func($route[0],$this->request);
+            call_user_func($route[0], $this->request);
         }
     }
 

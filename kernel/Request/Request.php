@@ -182,7 +182,7 @@ class Request
             return $this->getErrors();
         }
 
-        dd($rulesArguments);
+        return $rulesArguments;
     }
 
 
@@ -240,6 +240,28 @@ class Request
     public function getErrors(): array
     {
         return $this->errors;
+    }
+
+    /**
+     * Возвращает айди сессии текущего пользователя,
+     * по этому айди можно отслеживать конкретного пользователя и его действия на сайте
+     * @return ?string
+     */
+    public function getServerUserSession(): ?string
+    {
+        if (isset($_SERVER['HTTP_COOKIE'])) {
+            $cookies = explode(';', $_SERVER['HTTP_COOKIE']);
+
+            foreach ($cookies as $cookie) {
+                $parts = explode('=', $cookie);
+
+                $name = trim($parts[0]);
+                if ($name === 'PHPSESSID') {
+                    return trim($parts[1]);
+                }
+            }
+        }
+        return null;
     }
 
 }

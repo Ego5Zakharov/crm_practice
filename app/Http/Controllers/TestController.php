@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\TestRequest;
 use App\Http\Resources\UserResource;
 use App\Kernel\Auth\Auth;
 use App\Kernel\Collections\Collection;
@@ -11,6 +12,7 @@ use App\Kernel\Database\Query\Exceptions\WhereOperatorNotFoundException;
 use App\Kernel\Json\AnonymousJsonCollection;
 use App\Kernel\Json\Response;
 use App\Kernel\Request\Request;
+use App\Kernel\Throttle\Throtlle;
 use App\Kernel\View\ViewNotFoundException;
 use App\Models\Role;
 use App\Models\User;
@@ -149,22 +151,11 @@ class TestController extends Controller
     }
 
 
-    public function store(Request $request)
+    public function store(TestRequest $request)
     {
-        $validated = $request->validate([
-            'email' => [
-                // TODO сделать так, что если это строка, то проверялось колво символов в мин и макс
-                // если это инт, то приводилось к инту и проверялось,
-                // если double тогда к дабл приводилось и проверялось
-                'string', 'min:1', 'max:16', 'email'
-            ],
+        $validatedData = $request->validated();
 
-            'password' => [
-                'string', 'min:8'
-            ],
-        ]);
-
-        dd($validated);
+        Throtlle::rateLimiter();
     }
 
     // api show method
