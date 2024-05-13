@@ -153,7 +153,10 @@ class TestController extends Controller
     {
         $validated = $request->validate([
             'email' => [
-                'string', 'min:1', 'max:5'
+                // TODO сделать так, что если это строка, то проверялось колво символов в мин и макс
+                // если это инт, то приводилось к инту и проверялось,
+                // если double тогда к дабл приводилось и проверялось
+                'int', 'min:13', 'max:16'
             ],
 
             'password' => [
