@@ -2,17 +2,23 @@
 
 namespace App\Kernel\Request;
 
-use App\Kernel\Config\Config;
-use App\Kernel\Database\Database;
 use App\Kernel\Request\Rules\ExistsValueRule;
 use App\Kernel\Request\Rules\IsStringRule;
 use App\Kernel\Request\Rules\MailRule;
 use App\Kernel\Request\Rules\MaxRule;
 use App\Kernel\Request\Rules\MinRule;
-use App\Kernel\Session\Session;
 
 class Request
 {
+    /**
+     * @param array $get
+     * @param array $post
+     * @param array $server
+     * @param array $cookies
+     * @param array $files
+     * @param array $errors
+     * @param array $arrayRules
+     */
     public function __construct(
         public array $get,
         public array $post,
@@ -26,21 +32,33 @@ class Request
 
     }
 
+    /**
+     * @return Request
+     */
     public static function initialization(): Request
     {
         return new Request($_GET, $_POST, $_SERVER, $_COOKIE, $_FILES);
     }
 
+    /**
+     * @return mixed
+     */
     public function method()
     {
         return $this->server['REQUEST_METHOD'];
     }
 
+    /**
+     * @return bool|string
+     */
     public function uri(): bool|string
     {
         return strtok($this->server['REQUEST_URI'], '?');
     }
 
+    /**
+     * @return string|null
+     */
     public function query(): ?string
     {
         $url = config('app.url') . $this->server['REQUEST_URI'];
@@ -48,6 +66,9 @@ class Request
         return parse_url($url)['query'] ?? null;
     }
 
+    /**
+     * @return array|null
+     */
     public function params(): ?array
     {
         $url = $this->query();
@@ -65,36 +86,59 @@ class Request
     }
 
 
+    /**
+     * @return string
+     */
     public function fullUrl(): string
     {
         return config('app.url') . $this->server['REQUEST_URI'];
     }
 
+    /**
+     * @return array
+     */
     public function get(): array
     {
         return $this->get;
     }
 
+    /**
+     * @return array
+     */
     public function post(): array
     {
         return $this->post;
     }
 
+    /**
+     * @return array
+     */
     public function server(): array
     {
         return $this->server;
     }
 
+    /**
+     * @return array
+     */
     public function cookies(): array
     {
         return $this->cookies;
     }
 
+    /**
+     * @return array
+     */
     public function files(): array
     {
         return $this->files;
     }
 
+    /**
+     * @param string $argument
+     * @param string|null $default
+     * @return mixed|string|null
+     */
     public function input(string $argument, ?string $default = null)
     {
         return $this->get[$argument]
@@ -103,6 +147,11 @@ class Request
             ?? $default;
     }
 
+    /**
+     * @param string $argument
+     * @param string|null $default
+     * @return bool
+     */
     public function has(string $argument, ?string $default = null): bool
     {
         $hasValue = $this->get[$argument]
@@ -118,12 +167,7 @@ class Request
      *
      * Метод валидирующий поля
      */
-    /**
-     * @param array $arrayRules
-     *
-     * Метод валидирующий поля
-     */
-    public function validate(array $arrayRules)
+    public function validate(array $arrayRules): array
     {
         /**
          * @param array $arrayRules - массив правил валидации
@@ -188,6 +232,13 @@ class Request
     }
 
 
+    /**
+     * @param string $ruleName
+     * @param string $rule
+     * @param mixed $value
+     * @param mixed $requestValue
+     * @return void
+     */
     public function validateRule(string $ruleName, string $rule, mixed $value, mixed $requestValue): void
     {
         switch ($rule) {
@@ -227,6 +278,11 @@ class Request
         }
     }
 
+    /**
+     * @param string $ruleName
+     * @param string $error
+     * @return void
+     */
     public function setError(string $ruleName, string $error): void
     {
         // Если в массиве уже есть элемент с таким именем правила, добавляем ошибку к существующему массиву
@@ -239,6 +295,9 @@ class Request
     }
 
 
+    /**
+     * @return array
+     */
     public function getErrors(): array
     {
         return $this->errors;
@@ -266,6 +325,9 @@ class Request
         return null;
     }
 
+    /**
+     * @return mixed
+     */
     public function getIp()
     {
         return $this->server['REMOTE_ADDR'];

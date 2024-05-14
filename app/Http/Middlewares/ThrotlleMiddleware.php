@@ -14,6 +14,6 @@ class ThrotlleMiddleware extends Middleware
      */
     public function handle(): void
     {
-        Throtlle::rateLimiter(5);
+        Throtlle::rateLimiter(150);
     }
 }

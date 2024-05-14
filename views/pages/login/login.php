@@ -1,5 +1,11 @@
-<form action="<?= app_url() . '/login' ?>" method="POST">
+<?php
+
+use App\Kernel\Csrf\Csrf;
+
+?>
+<form action="<?= app_url() . '/login/' ?>" method="POST">
     <div>email</div>
+    <input type="hidden" name="csrf_token" value="<?= Csrf::getCsrfToken(); ?>">
     <input type="email" name="email">
     <div>password</div>
     <input type="password" name="password">
